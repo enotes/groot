@@ -1128,9 +1128,9 @@ const grootPrototype = {
             sourceLeaf = this.tree.find(sourceID);
 
         const ACTIVATE_ARGS = {
+            deep: true,
             source: Object.assign({
                 grootID: sourceID,
-                deep: true,
             }, sourceLeaf.attributes)
         };
 
@@ -1170,9 +1170,9 @@ const grootPrototype = {
             sourceLeaf = this.tree.find(sourceID);
 
         const DISABLE_ARGS = {
+            deep: true,
             source: Object.assign({
                 grootID: sourceID,
-                deep: true,
             }, sourceLeaf.attributes)
         };
 
