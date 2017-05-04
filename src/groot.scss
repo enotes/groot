@@ -1,0 +1,135 @@
+@import "typeface/style.scss";
+
+// colors
+$white: #fff;
+$black: #1f1f1f;
+$darkGray: #2e3336;
+$selectColor: #ffcc89;
+
+// widths
+$iconWidth: 1em;
+
+.groot-tree { // ul
+    position: relative;
+    padding: 0 0 0 $iconWidth;
+    font-size: 0.8rem;
+
+    .groot-tree {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+}
+
+.groot-leaf { // li
+    position: relative;
+    list-style: none;
+    margin: 0;
+
+    .groot-icon {
+        cursor: pointer;
+        color: rgba(0, 0, 0, 0.4);
+
+        &.disabled {
+            cursor: not-allowed;
+            color: rgba(0, 0, 0, 0.1);
+        }
+    }
+
+    &__toggle {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    &__up {
+        position: absolute;
+        top: 0;
+        left: $iconWidth;
+    }
+
+    &__down {
+        position: absolute;
+        top: 0;
+        left: $iconWidth * 2;
+    }
+
+    &__label {
+        display: block;
+        padding: 0 $iconWidth 0 $iconWidth * 3;
+        font-weight: bold;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    &.active &__label {
+        color: $black;
+    }
+
+    &.inactive &__label {
+        color: rgba(0, 0, 0, 0.4);
+    }
+
+    &__label.drag-target {
+        background-color: $selectColor;
+    }
+
+    &__label:hover {
+        background-color: $selectColor;
+    }
+
+    &__menu {
+        position: absolute;
+        top: 0;
+        right: 0;
+    }
+
+    &__label-field {
+        position: relative;
+        width: 100%;
+        padding: 0.3rem;
+    }
+}
+
+.groot-leaf.expanded {
+}
+
+.groot-leaf.collapsed {
+}
+
+.groot-menu-container { // section
+    display: none;
+}
+
+.groot-menu { // ul
+    position: absolute;
+    left: 0;
+    width: 90%;
+    margin: 0 auto;
+    padding: 0.5rem;
+
+    background-color: $white;
+    border: 1px solid $black;
+    box-shadow: 1px 1px 5px $darkGray;
+
+    z-index: 999;
+
+    &__item {
+        list-style: none;
+        margin: 0;
+    }
+
+    &__label {
+        color: $black;
+        font-weight: bold;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    &__label:hover {
+        background-color: $selectColor;
+    }
+
+    &__close {
+        cursor: pointer;
+    }
+}

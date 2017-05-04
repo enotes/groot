@@ -1,0 +1,31 @@
+<li class="groot-leaf {{#if isExpanded}}expanded{{else}}collapsed{{/if}} {{#if isActive}}active{{else}}inactive{{/if}}"
+    data-groot-id="{{id}}"
+    data-groot-position="{{position}}"
+    data-groot-level="{{level}}"
+    {{#each attributes}}
+    {{@key}}="{{this}}"
+    {{/each}}>
+    <span class="groot-leaf__toggle groot-icon {{#if leafs}}{{#if isExpanded}}groot-icon-minus{{else}}groot-icon-plus{{/if}}{{/if}}"></span>
+    <span class="groot-leaf__up groot-leaf__action groot-icon groot-icon-circle-up {{#if isFirstSibling}}disabled{{/if}}"></span>
+    <span class="groot-leaf__down groot-leaf__action groot-icon groot-icon-circle-down {{#if isLastSibling}}disabled{{/if}}"></span>
+    <a href="#" class="groot-leaf__label">
+        {{#unless isBeingRenamed}}
+        {{label}}{{#if leafCount}} ({{leafCount}}){{/if}}
+        {{/unless}}
+        {{#if isBeingRenamed}}
+        <input type="text"
+               class="groot-leaf__label-field"
+               value="{{label}}" />
+        {{/if}}
+    </a>
+    <span class="groot-leaf__menu groot-leaf__action groot-icon groot-icon-menu"></span>
+    {{#if isExpanded}}
+    {{#if leafs}}
+    <ul class="groot-tree">
+        {{#each leafs}}
+        {{> groot-leaf this}}
+        {{/each}}
+    </ul>
+    {{/if}}
+    {{/if}}
+</li>

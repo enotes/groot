@@ -1,0 +1,70 @@
+<ul class="groot-menu"
+    data-source-id="{{sourceID}}"
+    data-target-id="{{targetID}}">
+    <span class="groot-menu__close groot-icon groot-icon-cancel-circle" style="float:right;"></span>
+    {{#if create}}
+    <li class="groot-menu__item">
+        <a href="#" class="groot-menu__label groot-menu__create">Create child</a>
+    </li>
+    {{/if}}
+    {{#if rename}}
+    <li class="groot-menu__item">
+        <a href="#" class="groot-menu__label groot-menu__rename">Rename</a>
+    </li>
+    {{/if}}
+    {{#if delete}}
+    <li class="groot-menu__item">
+        <a href="#" class="groot-menu__label groot-menu__delete">Delete</a>
+    </li>
+    {{/if}}
+    {{#if moveTo}}
+    <li class="groot-menu__item">
+        <a href="#" class="groot-menu__label groot-menu__move-to">Move to...</a>
+    </li>
+    {{/if}}
+    {{#if moveUp}}
+    <li class="groot-menu__item">
+        <a href="#" class="groot-menu__label groot-menu__move-up">Move up</a>
+    </li>
+    {{/if}}
+    {{#if moveDown}}
+    <li class="groot-menu__item">
+        <a href="#" class="groot-menu__label groot-menu__move-down">Move down</a>
+    </li>
+    {{/if}}
+    {{#if moveFirst}}
+    <li class="groot-menu__item">
+        <a href="#" class="groot-menu__label groot-menu__move-first">Move first</a>
+    </li>
+    {{/if}}
+    {{#if moveLast}}
+    <li class="groot-menu__item">
+        <a href="#" class="groot-menu__label groot-menu__move-last">Move last</a>
+    </li>
+    {{/if}}
+    {{#if moveBefore}}
+        <li class="groot-menu__item">
+            <a href="#" class="groot-menu__label groot-menu__move-before">Move before</a>
+        </li>
+    {{/if}}
+    {{#if moveAfter}}
+        <li class="groot-menu__item">
+            <a href="#" class="groot-menu__label groot-menu__move-after">Move after</a>
+        </li>
+    {{/if}}
+    {{#if makeParent}}
+    <li class="groot-menu__item">
+        <a href="#" class="groot-menu__label groot-menu__make-parent">Assign to parent</a>
+    </li>
+    {{/if}}
+    {{#if activateChildren}}
+    <li class="groot-menu__item">
+        <a href="#" class="groot-menu__label groot-menu__activate-children">Activate children</a>
+    </li>
+    {{/if}}
+    {{#if disableChildren}}
+    <li class="groot-menu__item">
+        <a href="#" class="groot-menu__label groot-menu__disable-children">Disable children</a>
+    </li>
+    {{/if}}
+</ul>

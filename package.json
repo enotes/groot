@@ -1,0 +1,41 @@
+{
+  "name": "groot",
+  "description": "Groot, a content tree.",
+  "version": "1.0.0-beta",
+  "main": "dist/groot.js",
+  "scripts": {
+    "lint": "./node_modules/.bin/eslint -c ./.eslintrc --quiet ./src/",
+    "clean": "rm -rf ./dist && mkdir ./dist",
+    "scss": "./node_modules/.bin/node-sass --source-map=true ./src/groot.scss > ./dist/groot.css",
+    "pack": "./node_modules/.bin/webpack",
+    "font": "cp -r ./src/typeface/fonts ./dist/",
+    "license": "cp LICENSE ./dist",
+    "demo": "cp ./src/demo.html ./dist/",
+    "build": "npm run-script clean && npm run-script pack && npm run-script scss && npm run-script font && npm run-script license && npm run-script demo"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/enotes/groot.git"
+  },
+  "author": "Nicholas Cloud <ncloud@enotes.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/enotes/groot/issues"
+  },
+  "homepage": "https://github.com/enotes/groot#readme",
+  "dependencies": {
+    "eventemitter3": "2.0.3",
+    "keycode-js": "0.0.4"
+  },
+  "devDependencies": {
+    "babel-core": "6.24.0",
+    "babel-loader": "6.4.1",
+    "babel-polyfill": "6.23.0",
+    "babel-preset-es2015": "6.24.0",
+    "eslint": "3.18.0",
+    "eslint-config-enotes-base": "1.3.0",
+    "handlebars-loader": "1.5.0",
+    "node-sass": "4.5.2",
+    "webpack": "2.3.1"
+  }
+}
