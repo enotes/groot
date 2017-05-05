@@ -4116,46 +4116,218 @@ var CAPTURE_KEYS = ENTER_KEYS.concat([_keycodeJs2.default.KEY_ESCAPE]);
 // Groot
 //
 
+/**
+ * Groot events
+ * @type {{RENDERING: string, RENDERED: string, LEAF: {MOVING: string, MOVED: string, CLICKING: string, CLICKED: string, DRAGGING: string, DRAGGED: string, DROPPING: string, DROPPED: string, RENAMING: string, RENAMED: string, UNNAMED: string, EXPANDING: string, EXPANDED: string, COLLAPSING: string, COLLAPSED: string, DELETING: string, DELETED: string, CREATING: string, CREATED: string, PRUNING: string, PRUNED: string, ACTIVATING: string, ACTIVATED: string, DISABLING: string, DISABLED: string}, MENU: {CLICKING: string, CLICKED: string, SHOWING: string, SHOWN: string, HIDING: string, HIDDEN: string}}}
+ */
 var EVENTS = {
+    /**
+     * rendering
+     * - async:no
+     * - multisource:no
+     */
     RENDERING: 'rendering',
+    /**
+     * rendered
+     * - async:no
+     * - multisource:no
+     */
     RENDERED: 'rendered',
+    /**
+     * leaf-specific events
+     */
     LEAF: {
-        /** Raises async event args */
+        /**
+         * leaf.moving
+         * - async:yes
+         * - multisource:yes
+         */
         MOVING: 'leaf.moving',
+        /**
+         * leaf.moved
+         * - async:no
+         * - multisource:yes
+         */
         MOVED: 'leaf.moved',
+        /**
+         * leaf.clicking
+         * - async:no
+         * - multisource:no
+         */
         CLICKING: 'leaf.clicking',
+        /**
+         * leaf.clicked
+         * - async:no
+         * - multisource:no
+         */
         CLICKED: 'leaf.clicked',
+        /**
+         * leaf.dragging
+         * - async:no
+         * - multisource:no
+         */
         DRAGGING: 'leaf.dragging',
+        /**
+         * leaf.dragged
+         * - async:no
+         * - multisource:no
+         */
         DRAGGED: 'leaf.dragged',
+        /**
+         * leaf.dropping
+         * - async:yes
+         * - multisource:yes
+         */
         DROPPING: 'leaf.dropping',
+        /**
+         * leaf.dropped
+         * - async:no
+         * - multisource:yes
+         */
         DROPPED: 'leaf.dropped',
-        /** Raises async event args */
+        /**
+         * leaf.renaming
+         * - async:yes
+         * - multisource:no
+         */
         RENAMING: 'leaf.renaming',
+        /**
+         * leaf.renamed
+         * - async:no
+         * - multisource:no
+         */
         RENAMED: 'leaf.renamed',
+        /**
+         * leaf.unnamed
+         * - async:no
+         * - multisource:no
+         */
         UNNAMED: 'leaf.unnamed',
+        /**
+         * leaf.expanding
+         * - async:no
+         * - multisource:no
+         */
         EXPANDING: 'leaf.expanding',
+        /**
+         * leaf.expanded
+         * - async:no
+         * - multisource:no
+         */
         EXPANDED: 'leaf.expanded',
+        /**
+         * leaf.collapsing
+         * - async:no
+         * - multisource:no
+         */
         COLLAPSING: 'leaf.collapsing',
+        /**
+         * leaf.collapsed
+         * - async:no
+         * - multisource:no
+         */
         COLLAPSED: 'leaf.collapsed',
-        /** Raises async event args */
+        /**
+         * leaf.deleting
+         * - async:yes
+         * - multisource:no
+         */
         DELETING: 'leaf.deleting',
+        /**
+         * leaf.deleted
+         * - async:no
+         * - multisource:no
+         */
         DELETED: 'leaf.deleted',
+        /**
+         * leaf.creating
+         * - async:no
+         * - multisource:no
+         */
         CREATING: 'leaf.creating',
+        /**
+         * leaf.created
+         * - async:no
+         * - multisource:no
+         */
         CREATED: 'leaf.created',
+        /**
+         * leaf.pruning
+         * - async:no
+         * - multisource:no
+         */
         PRUNING: 'leaf.pruning',
+        /**
+         * leaf.pruned
+         * - async:no
+         * - multisource:no
+         */
         PRUNED: 'leaf.pruned',
+        /**
+         * leaf.activating
+         * - async:no
+         * - multisource:no
+         */
         ACTIVATING: 'leaf.activating',
+        /**
+         * leaf.activated
+         * - async:no
+         * - multisource:no
+         */
         ACTIVATED: 'leaf.activated',
+        /**
+         * leaf.disabling
+         * - async:no
+         * - multisource:no
+         */
         DISABLING: 'leaf.disabling',
+        /**
+         * leaf.disabled
+         * - async:no
+         * - multisource:no
+         */
         DISABLED: 'leaf.disabled'
     },
+    /**
+     * menu-specific events
+     */
     MENU: {
-        CLICKING: 'menu.clicking',
-        CLICKED: 'menu.clicked',
-        SHOWING: 'menu.showing',
-        SHOWN: 'menu.shown',
-        HIDING: 'menu.hiding',
-        HIDDEN: 'menu.hidden'
+        /**
+         * menu.clicking
+         * - async:no
+         * - multisource:no
+         */
+        CLICKING: '_menu.clicking',
+        /**
+         * menu.clicked
+         * - async:no
+         * - multisource:no
+         */
+        CLICKED: '_menu.clicked',
+        /**
+         * menu.showing
+         * - async:no
+         * - multisource:no
+         */
+        SHOWING: '_menu.showing',
+        /**
+         * menu.shown
+         * - async:no
+         * - multisource:no
+         */
+        SHOWN: '_menu.shown',
+        /**
+         * menu.hiding
+         * - async:no
+         * - multisource:no
+         */
+        HIDING: '_menu.hiding',
+        /**
+         * menu.hidden
+         * - async:no
+         * - multisource:no
+         */
+        HIDDEN: '_menu.hidden'
     }
 };
 
@@ -4182,13 +4354,14 @@ var grootPrototype = {
     /**
      * Prune a node from the tree.
      *   - Will raise synchronous event.
-     *   - Is not cancelable.
-     * @param attributes
+     *   - Is not cancellable.
+     * @param {Object} attributes - custom attributes used to find
+     *   the leaf to be pruned
      */
     prune: function prune() {
         var attributes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-        var sourceLeaf = this.tree.findByAttributes(attributes);
+        var sourceLeaf = this._tree.findByAttributes(attributes);
         var parentLeaf = sourceLeaf.getParent();
 
         if (!parentLeaf) {
@@ -4212,15 +4385,16 @@ var grootPrototype = {
     /**
      * Remove a node from the tree.
      *   - Will raise async event.
-     *   - Is cancelable.
-     * @param attributes
+     *   - Is cancellable.
+     * @param {Object} attributes - custom attributes used to find
+     *   the leaf to be removed
      */
     remove: function remove() {
         var _this = this;
 
         var attributes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-        var sourceLeaf = this.tree.findByAttributes(attributes);
+        var sourceLeaf = this._tree.findByAttributes(attributes);
         var parentLeaf = sourceLeaf.getParent();
 
         if (!parentLeaf) {
@@ -4242,10 +4416,19 @@ var grootPrototype = {
         });
     },
 
+    /**
+     * Rename a node.
+     *   - Will raise asynchronous event.
+     *   - Is cancellable.
+     * @param {Object} attributes - custom attributes used to find
+     *   the leaf to be renamed
+     * @param {String} label
+     * @returns {Promise.<AsyncEventArgs>}
+     */
     rename: function rename(attributes, label) {
         var _this2 = this;
 
-        var sourceLeaf = this.tree.findByAttributes(attributes);
+        var sourceLeaf = this._tree.findByAttributes(attributes);
 
         if (sourceLeaf.label === label) {
             return;
@@ -4267,8 +4450,15 @@ var grootPrototype = {
         });
     },
 
+    /**
+     * Expand a node.
+     *   - Will raise synchronous event.
+     *   - Is not cancellable.
+     * @param {Object} attributes - custom attributes used to find
+     *   the leaf to be expanded
+     */
     expand: function expand(attributes) {
-        var sourceLeaf = this.tree.findByAttributes(attributes);
+        var sourceLeaf = this._tree.findByAttributes(attributes);
 
         if (sourceLeaf.isExpanded) {
             return;
@@ -4290,11 +4480,15 @@ var grootPrototype = {
         this._renderLeaf(listItem, sourceLeaf);
     },
 
+    /**
+     * Disable this instance. No events will be fired while
+     *   the instance is disabled.
+     */
     disable: function disable() {
         var _this3 = this;
 
         CLICKABLE_CONTROLS.forEach(function (controlClass) {
-            _this3.containerElement.querySelectorAll(controlClass).forEach(function (element) {
+            _this3._containerElement.querySelectorAll(controlClass).forEach(function (element) {
                 element.style.cursor = 'wait';
                 element.setAttribute('disabled', 'disabled');
             });
@@ -4302,11 +4496,15 @@ var grootPrototype = {
         this.isEnabled = false;
     },
 
+    /**
+     * Enable this instance. Events will be fired while the
+     *   instance is enabled.
+     */
     enable: function enable() {
         var _this4 = this;
 
         CLICKABLE_CONTROLS.forEach(function (controlClass) {
-            _this4.containerElement.querySelectorAll(controlClass).forEach(function (element) {
+            _this4._containerElement.querySelectorAll(controlClass).forEach(function (element) {
                 element.style.cursor = 'default';
                 element.removeAttribute('disabled');
             });
@@ -4314,16 +4512,22 @@ var grootPrototype = {
         this.isEnabled = true;
     },
 
+    /**
+     * Render this instance in the DOM.
+     */
     render: function render() {
         this._raise(EVENTS.RENDERING, {});
-        this.containerElement.innerHTML = (0, _grootTemplates.treeTemplate)(this.tree);
-        var inputElement = this.containerElement.querySelector('.groot-leaf__label-field');
+        this._containerElement.innerHTML = (0, _grootTemplates.treeTemplate)(this._tree);
+        var inputElement = this._containerElement.querySelector('.groot-leaf__label-field');
         if (inputElement) {
             inputElement.focus();
         }
         this._raise(EVENTS.RENDERED, {});
     },
 
+    /**
+     * Close this instance's menu, if it is open.
+     */
     closeMenu: function closeMenu() {
         this._hideMenu();
     },
@@ -4333,7 +4537,7 @@ var grootPrototype = {
     //
 
     _findListItem: function _findListItem(leaf) {
-        return this.containerElement.querySelector('[data-groot-id="' + leaf.id + '"]');
+        return this._containerElement.querySelector('[data-groot-id="' + leaf.id + '"]');
     },
 
     /**
@@ -4407,18 +4611,18 @@ var grootPrototype = {
     },
 
     _hideMenu: function _hideMenu() {
-        if (!this.menu.isShowing) {
+        if (!this._menu.isShowing) {
             return;
         }
         this._raise(EVENTS.MENU.HIDING);
-        this.menu.hide();
-        this._raise(EVENTS.MENU.HIDDEN, this.menu.options);
+        this._menu.hide();
+        this._raise(EVENTS.MENU.HIDDEN, this._menu.options);
     },
 
     _showMenu: function _showMenu(listItem) {
         var optionOverrides = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-        if (this.menu.isShowing) {
+        if (this._menu.isShowing) {
             this._hideMenu();
         }
         var options = _grootMenu.GrootMenu.createOptions(optionOverrides);
@@ -4426,15 +4630,15 @@ var grootPrototype = {
             return;
         }
         this._raise(EVENTS.MENU.SHOWING);
-        this.menu.show(listItem, options);
-        this._raise(EVENTS.MENU.SHOWN, this.menu.options);
+        this._menu.show(listItem, options);
+        this._raise(EVENTS.MENU.SHOWN, this._menu.options);
     },
 
     _moveLeafUp: function _moveLeafUp(listItem) {
         var _this6 = this;
 
         var sourceID = Number(listItem.getAttribute('data-groot-id'));
-        var sourceLeaf = this.tree.find(sourceID);
+        var sourceLeaf = this._tree.find(sourceID);
         var siblingLeaf = sourceLeaf.getSiblingBefore();
 
         if (!siblingLeaf) {
@@ -4472,7 +4676,7 @@ var grootPrototype = {
         var _this7 = this;
 
         var sourceID = Number(listItem.getAttribute('data-groot-id'));
-        var sourceLeaf = this.tree.find(sourceID);
+        var sourceLeaf = this._tree.find(sourceID);
         var siblingLeaf = sourceLeaf.getSiblingAfter();
 
         if (!siblingLeaf) {
@@ -4513,7 +4717,7 @@ var grootPrototype = {
             return false;
         }
         // can we handle this event type?
-        var handlers = this.handlers[e.type];
+        var handlers = this._handlers[e.type];
         if (!handlers) {
             return true;
         }
@@ -4538,7 +4742,7 @@ var grootPrototype = {
             listItem = closestGrootListItem(trigger),
             sourceID = Number(listItem.getAttribute('data-groot-id')),
             isRightClick = e.button === 2,
-            sourceLeaf = this.tree.find(sourceID);
+            sourceLeaf = this._tree.find(sourceID);
 
         var CLICK_ARGS = {
             source: Object.assign({
@@ -4595,7 +4799,7 @@ var grootPrototype = {
             listItem = closestGrootListItem(trigger),
             sourceID = Number(listItem.getAttribute('data-groot-id')),
             isRightClick = e.button === 2,
-            sourceLeaf = this.tree.find(sourceID);
+            sourceLeaf = this._tree.find(sourceID);
 
         var CLICK_ARGS = {
             source: Object.assign({
@@ -4628,7 +4832,7 @@ var grootPrototype = {
         var trigger = e.target,
             listItem = closestGrootListItem(trigger),
             sourceID = Number(listItem.getAttribute('data-groot-id')),
-            sourceLeaf = this.tree.find(sourceID);
+            sourceLeaf = this._tree.find(sourceID);
 
         this._showMenu(listItem, {
             sourceID: sourceID,
@@ -4665,7 +4869,7 @@ var grootPrototype = {
         var trigger = e.target,
             listItem = closestGrootListItem(trigger),
             sourceID = Number(listItem.getAttribute('data-groot-id')),
-            leaf = this.tree.find(sourceID);
+            leaf = this._tree.find(sourceID);
 
         if (leaf.isBeingRenamed) {
             e.preventDefault();
@@ -4689,8 +4893,8 @@ var grootPrototype = {
             listItem = closestGrootListItem(trigger),
             targetID = Number(listItem.getAttribute('data-groot-id')),
             sourceID = Number(e.dataTransfer.getData('text')),
-            sourceLeaf = this.tree.find(sourceID),
-            targetLeaf = this.tree.find(targetID);
+            sourceLeaf = this._tree.find(sourceID),
+            targetLeaf = this._tree.find(targetID);
 
         var DRAG_ARGS = {
             source: Object.assign({
@@ -4777,7 +4981,7 @@ var grootPrototype = {
 
         var listItem = closestGrootListItem(trigger),
             sourceID = Number(listItem.getAttribute('data-groot-id')),
-            sourceLeaf = this.tree.find(sourceID);
+            sourceLeaf = this._tree.find(sourceID);
 
         var isCommitting = ENTER_KEYS.indexOf(e.keyCode) >= 0;
         var isCancelling = _keycodeJs2.default.KEY_ESCAPE === e.keyCode;
@@ -4859,8 +5063,8 @@ var grootPrototype = {
             action: 'create'
         });
 
-        var sourceID = this.menu.options.sourceID,
-            sourceLeaf = this.tree.find(sourceID),
+        var sourceID = this._menu.options.sourceID,
+            sourceLeaf = this._tree.find(sourceID),
             graftedLeaf = sourceLeaf.graft();
 
 
@@ -4877,7 +5081,7 @@ var grootPrototype = {
         sourceLeaf.expand();
         this._raise(EVENTS.LEAF.EXPANDED, EXPAND_ARGS);
 
-        this._renderLeaf(this.menu.listItemElement, sourceLeaf);
+        this._renderLeaf(this._menu.listItemElement, sourceLeaf);
 
         this._raise(EVENTS.MENU.CLICKED, {
             action: 'create'
@@ -4891,13 +5095,13 @@ var grootPrototype = {
             action: 'rename'
         });
 
-        var sourceID = this.menu.options.sourceID,
-            sourceLeaf = this.tree.find(sourceID);
+        var sourceID = this._menu.options.sourceID,
+            sourceLeaf = this._tree.find(sourceID);
 
 
         sourceLeaf.requestLabelChange();
 
-        this._renderLeaf(this.menu.listItemElement, sourceLeaf);
+        this._renderLeaf(this._menu.listItemElement, sourceLeaf);
 
         this._raise(EVENTS.MENU.CLICKED, {
             action: 'rename'
@@ -4913,8 +5117,8 @@ var grootPrototype = {
             action: 'delete'
         });
 
-        var sourceID = this.menu.options.sourceID,
-            sourceLeaf = this.tree.find(sourceID),
+        var sourceID = this._menu.options.sourceID,
+            sourceLeaf = this._tree.find(sourceID),
             parentLeaf = sourceLeaf.getParent();
 
 
@@ -4931,7 +5135,7 @@ var grootPrototype = {
             }, sourceLeaf.attributes)
         };
 
-        var listItem = this.menu.listItemElement;
+        var listItem = this._menu.listItemElement;
 
         this._raiseAsync(EVENTS.LEAF.DELETING, DELETE_ARGS).then(function () {
             parentLeaf.remove(sourceLeaf);
@@ -4955,8 +5159,8 @@ var grootPrototype = {
             action: 'move-to'
         });
 
-        var sourceID = this.menu.options.sourceID,
-            sourceLeaf = this.tree.find(sourceID);
+        var sourceID = this._menu.options.sourceID,
+            sourceLeaf = this._tree.find(sourceID);
 
 
         var MOVE_ARGS = {
@@ -4982,7 +5186,7 @@ var grootPrototype = {
             action: 'move-up'
         });
 
-        this._moveLeafUp(this.menu.listItemElement);
+        this._moveLeafUp(this._menu.listItemElement);
 
         this._hideMenu();
 
@@ -4998,7 +5202,7 @@ var grootPrototype = {
             action: 'move-down'
         });
 
-        this._moveLeafDown(this.menu.listItemElement);
+        this._moveLeafDown(this._menu.listItemElement);
 
         this._hideMenu();
 
@@ -5016,9 +5220,9 @@ var grootPrototype = {
             action: 'move-first'
         });
 
-        var sourceID = this.menu.options.sourceID;
+        var sourceID = this._menu.options.sourceID;
 
-        var sourceLeaf = this.tree.find(sourceID);
+        var sourceLeaf = this._tree.find(sourceID);
         var parentLeaf = sourceLeaf.getParent();
         if (!parentLeaf) {
             return false;
@@ -5047,7 +5251,7 @@ var grootPrototype = {
             MOVE_ARGS.source.position = sourceLeaf.position;
             MOVE_ARGS.target.position = firstLeaf.position;
             _this11._raise(EVENTS.LEAF.MOVED, MOVE_ARGS);
-            _this11._renderParentLeaf(_this11.menu.listItemElement, sourceLeaf);
+            _this11._renderParentLeaf(_this11._menu.listItemElement, sourceLeaf);
         });
 
         this._raise(EVENTS.MENU.CLICKED, {
@@ -5064,9 +5268,9 @@ var grootPrototype = {
             action: 'move-last'
         });
 
-        var sourceID = this.menu.options.sourceID;
+        var sourceID = this._menu.options.sourceID;
 
-        var sourceLeaf = this.tree.find(sourceID);
+        var sourceLeaf = this._tree.find(sourceID);
         var parentLeaf = sourceLeaf.getParent();
         if (!parentLeaf) {
             return false;
@@ -5095,7 +5299,7 @@ var grootPrototype = {
             MOVE_ARGS.source.position = sourceLeaf.position;
             MOVE_ARGS.target.position = lastLeaf.position;
             _this12._raise(EVENTS.LEAF.MOVED, MOVE_ARGS);
-            _this12._renderParentLeaf(_this12.menu.listItemElement, sourceLeaf);
+            _this12._renderParentLeaf(_this12._menu.listItemElement, sourceLeaf);
         });
 
         this._raise(EVENTS.MENU.CLICKED, {
@@ -5112,14 +5316,13 @@ var grootPrototype = {
             action: 'move-before'
         });
 
-        var _menu$options = this.menu.options,
+        var _menu$options = this._menu.options,
             sourceID = _menu$options.sourceID,
             targetID = _menu$options.targetID,
-            sourceLeaf = this.tree.find(sourceID),
-            targetLeaf = this.tree.find(targetID),
+            sourceLeaf = this._tree.find(sourceID),
+            targetLeaf = this._tree.find(targetID),
             sourceParent = sourceLeaf.getParent(),
             targetParent = targetLeaf.getParent();
-
 
         var MOVE_ARGS = {
             direction: 'before',
@@ -5157,14 +5360,13 @@ var grootPrototype = {
             action: 'move-after'
         });
 
-        var _menu$options2 = this.menu.options,
+        var _menu$options2 = this._menu.options,
             sourceID = _menu$options2.sourceID,
             targetID = _menu$options2.targetID,
-            sourceLeaf = this.tree.find(sourceID),
-            targetLeaf = this.tree.find(targetID),
+            sourceLeaf = this._tree.find(sourceID),
+            targetLeaf = this._tree.find(targetID),
             sourceParent = sourceLeaf.getParent(),
             targetParent = targetLeaf.getParent();
-
 
         var MOVE_ARGS = {
             direction: 'after',
@@ -5202,12 +5404,11 @@ var grootPrototype = {
             action: 'make-parent'
         });
 
-        var _menu$options3 = this.menu.options,
+        var _menu$options3 = this._menu.options,
             sourceID = _menu$options3.sourceID,
             targetID = _menu$options3.targetID,
-            sourceLeaf = this.tree.find(sourceID),
-            targetLeaf = this.tree.find(targetID);
-
+            sourceLeaf = this._tree.find(sourceID),
+            targetLeaf = this._tree.find(targetID);
 
         var MOVE_ARGS = {
             direction: 'parent',
@@ -5256,9 +5457,9 @@ var grootPrototype = {
             action: 'activate-children'
         });
 
-        var sourceID = this.menu.options.sourceID,
-            listItem = this.menu.listItemElement,
-            sourceLeaf = this.tree.find(sourceID);
+        var sourceID = this._menu.options.sourceID,
+            listItem = this._menu.listItemElement,
+            sourceLeaf = this._tree.find(sourceID);
 
 
         var ACTIVATE_ARGS = {
@@ -5301,9 +5502,9 @@ var grootPrototype = {
             action: 'disable-children'
         });
 
-        var sourceID = this.menu.options.sourceID,
-            listItem = this.menu.listItemElement,
-            sourceLeaf = this.tree.find(sourceID);
+        var sourceID = this._menu.options.sourceID,
+            listItem = this._menu.listItemElement,
+            sourceLeaf = this._tree.find(sourceID);
 
 
         var DISABLE_ARGS = {
@@ -5347,12 +5548,24 @@ var grootPrototype = {
  * @constructor
  */
 var Groot = exports.Groot = function Groot(htmlElement, rootLeaf) {
+    /**
+     * @typedef {Object} Groot
+     * @property {Boolean} isEnabled
+     * @method {Function} prune
+     * @method {Function} remove
+     * @method {Function} rename
+     * @method {Function} expand
+     * @method {Function} disable
+     * @method {Function} enable
+     * @method {Function} render
+     * @method {Function} closeMenu
+     */
     var instance = Object.assign(new Emitter(), grootPrototype);
-    instance.containerElement = htmlElement;
-    instance.tree = rootLeaf;
-    instance.menu = new _grootMenu.GrootMenu();
     instance.isEnabled = true;
-    instance.handlers = {
+    instance._containerElement = htmlElement;
+    instance._tree = rootLeaf;
+    instance._menu = new _grootMenu.GrootMenu();
+    instance._handlers = {
         'click': {
             // leaf controls
             '.groot-leaf__label': instance._onLeafLabelClicked,
@@ -5404,7 +5617,7 @@ var Groot = exports.Groot = function Groot(htmlElement, rootLeaf) {
         }
     };
 
-    Object.keys(instance.handlers).forEach(function (event) {
+    Object.keys(instance._handlers).forEach(function (event) {
         htmlElement.addEventListener(event, instance._captureDOMEvent.bind(instance));
     });
 
@@ -5421,6 +5634,15 @@ var isString = function isString(target) {
     return Object.prototype.toString.call(target) === '[object String]';
 };
 
+/**
+ * Wiretap a Groot instance to see all raised events.
+ *   Will automatically commit async events if the async event
+ *   is only being monitored by the wiretap. If other handlers
+ *   are listening for the event, they must commit or cancel
+ *   the eventArgs object.
+ * @param {Groot} groot
+ * @param {Object} events - Groot events object
+ */
 Groot.wireTap = function (groot) {
     var events = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : EVENTS;
 
@@ -5482,7 +5704,19 @@ var eventArgsPrototype = {
     isAsync: false
 };
 
+/**
+ * Creates an instance of EventArgs
+ * @param {Object} [properties] - additional properties to append to
+ *   the EventArgs object
+ * @returns {EventArgs}
+ * @constructor
+ */
 var EventArgs = exports.EventArgs = function EventArgs(properties) {
+    /**
+     * @typedef {Object} EventArgs
+     * @augments {eventArgsPrototype}
+     * @property {Boolean} isAsync=false
+     */
     return Object.assign(Object.create(eventArgsPrototype), properties);
 };
 
@@ -5490,7 +5724,6 @@ eventArgsPrototype.constructor = EventArgs;
 
 //
 // "Async" event args
-// Raises events to handle
 //
 
 var ASYNC_EVENTS = {
@@ -5501,6 +5734,9 @@ var ASYNC_EVENTS = {
 var asyncEventArgsPrototype = {
     isAsync: true,
 
+    /**
+     * Cancel this async event
+     */
     cancel: function cancel() {
         if (this.isComitted) {
             return;
@@ -5509,6 +5745,11 @@ var asyncEventArgsPrototype = {
         this.emit(ASYNC_EVENTS.CANCELLED);
     },
 
+    /**
+     * Commit this async event
+     * @param {Object} [result] - result meta-data to be merged into
+     *   a leaf's attributes on commit
+     */
     commit: function commit() {
         var result = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
@@ -5521,7 +5762,28 @@ var asyncEventArgsPrototype = {
     }
 };
 
+/**
+ * Creates an instance of AsyncEventArgs
+ * @param {Object} [properties] - additional properties to append to
+ *   the AsyncEventArgs object
+ * @returns {AsyncEventArgs}
+ * @constructor
+ */
 var AsyncEventArgs = exports.AsyncEventArgs = function AsyncEventArgs(properties) {
+    /**
+     * @typedef {Object} AsyncEventArgs
+     * @augments {EventEmitter3}
+     * @augments {asyncEventArgsPrototype}
+     * @property {Boolean} isAsync=true
+     * @property {Boolean} isCommitted
+     * @property {Boolean} isCancelled
+     * @property {Object} result - result meta-data to be merged into
+     *   a leaf's attributes on commit
+     * @method {Function} commit
+     * @method {Function} cancel
+     * @method {Function} on
+     * @method {Function} emit
+     */
     var instance = Object.assign(new Emitter(), asyncEventArgsPrototype, properties);
     instance.isCommitted = false;
     instance.isCancelled = false;
@@ -5531,6 +5793,10 @@ var AsyncEventArgs = exports.AsyncEventArgs = function AsyncEventArgs(properties
 
 asyncEventArgsPrototype.constructor = AsyncEventArgs;
 
+/**
+ * Events raised by AsyncEventArgs
+ * @type {{CANCELLED: string, COMMITTED: string}}
+ */
 AsyncEventArgs.EVENTS = ASYNC_EVENTS;
 
 /***/ }),
@@ -5557,14 +5823,27 @@ var leafPrototype = {
     // modifying this leaf's relationship to other leafs
     //
 
+    /**
+     * Move this instance before leaf.
+     * @param {Leaf} leaf
+     */
     moveBefore: function moveBefore(leaf) {
         leaf.getParent().move(this, leaf.position);
     },
 
+    /**
+     * Move this instance after leaf.
+     * @param {Leaf} leaf
+     */
     moveAfter: function moveAfter(leaf) {
         leaf.getParent().move(this, leaf.position + 1);
     },
 
+    /**
+     * Make this instance a parent of leaf.
+     * @param {Leaf} leaf
+     * @returns {Leaf} - leaf
+     */
     makeParentOf: function makeParentOf(leaf) {
         var oldParent = leaf.getParent();
         if (oldParent) {
@@ -5579,10 +5858,20 @@ var leafPrototype = {
         return leaf;
     },
 
+    /**
+     * Make this instance a child of leaf.
+     * @param {Leaf} leaf
+     * @returns {Leaf} - leaf
+     */
     makeChildOf: function makeChildOf(leaf) {
         return leaf.makeParentOf(this);
     },
 
+    /**
+     * Remove leaf from this instance's child leafs.
+     * @param {Leaf} leaf
+     * @returns {Leaf} leaf
+     */
     remove: function remove(leaf) {
         if (!this.isParentOf(leaf)) {
             throw new Error('leaf ' + leaf.id + ' is not child of node ' + this.id);
@@ -5594,6 +5883,12 @@ var leafPrototype = {
         return leaf;
     },
 
+    /**
+     * Move leaf to position within this instance's child leafs.
+     * @param {Leaf} leaf
+     * @param {Number} position
+     * @returns {Leaf} leaf
+     */
     move: function move(leaf, position) {
         if (!leaf.getParent().equals(this)) {
             this.makeParentOf(leaf);
@@ -5662,10 +5957,16 @@ var leafPrototype = {
         return true;
     },
 
+    /**
+     * Activate this instance.
+     */
     activate: function activate() {
         this.isActive = true;
     },
 
+    /**
+     * Deactivate this instance.
+     */
     deactivate: function deactivate() {
         this.isActive = false;
     },
@@ -5674,14 +5975,27 @@ var leafPrototype = {
     // getting leafs related to this leaf
     //
 
+    /**
+     * Get the parent of this instance.
+     * @returns {Leaf|null}
+     */
     getParent: function getParent() {
         return this.parent;
     },
 
+    /**
+     * Does this instance have any children?
+     * @returns {Boolean}
+     */
     hasChildren: function hasChildren() {
         return this.length() > 0;
     },
 
+    /**
+     * Does this instance have any active children?
+     * @param {Boolean} [deep=false] - consider children of children, etc.
+     * @returns {Boolean}
+     */
     hasAnyActiveChildren: function hasAnyActiveChildren() {
         var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
@@ -5697,6 +6011,11 @@ var leafPrototype = {
         return false;
     },
 
+    /**
+     * Does this instance have any inactive children?
+     * @param {Boolean} [deep=true] - consider children of children, etc.
+     * @returns {Boolean}
+     */
     hasAnyInactiveChildren: function hasAnyInactiveChildren() {
         var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
@@ -5712,10 +6031,18 @@ var leafPrototype = {
         return false;
     },
 
+    /**
+     * Get this instance's children.
+     * @returns {Array.<Leaf>}
+     */
     getChildren: function getChildren() {
         return this.leafs;
     },
 
+    /**
+     * Get the first child in this instance.
+     * @returns {Leaf|null}
+     */
     getFirstChild: function getFirstChild() {
         if (this.length() === 0) {
             return null;
@@ -5723,6 +6050,10 @@ var leafPrototype = {
         return this.leafs[0];
     },
 
+    /**
+     * Get the last child in this instance.
+     * @returns {Leaf|null}
+     */
     getLastChild: function getLastChild() {
         if (this.length() === 0) {
             return null;
@@ -5730,6 +6061,10 @@ var leafPrototype = {
         return this.leafs[this.length() - 1];
     },
 
+    /**
+     * Get the siblings of this instance.
+     * @returns {Array.<Leaf>}
+     */
     getSiblings: function getSiblings() {
         var siblings = this.getParent().getChildren()
         // shallow copy
@@ -5740,6 +6075,10 @@ var leafPrototype = {
         return siblings;
     },
 
+    /**
+     * Get the siblings before this instance.
+     * @returns {Array.<Leaf>|null}
+     */
     getSiblingBefore: function getSiblingBefore() {
         if (this.isRoot) {
             return null;
@@ -5750,6 +6089,10 @@ var leafPrototype = {
         return this.getParent().get(this.position - 1);
     },
 
+    /**
+     * Get the siblings after this instance.
+     * @returns {Array.<Leaf>|null}
+     */
     getSiblingAfter: function getSiblingAfter() {
         if (this.isRoot) {
             return null;
@@ -5760,10 +6103,20 @@ var leafPrototype = {
         return this.getParent().get(this.position + 1);
     },
 
+    /**
+     * Get a child leaf of this instance by position.
+     * @param {Number} position
+     * @returns {Leaf|null}
+     */
     get: function get(position) {
         return this.leafs[position];
     },
 
+    /**
+     * Create a generator to traverse this instance's child leafs.
+     * @param {Boolean} [deep=false] - traverse children of children, etc.
+     * @return {Generator}
+     */
     traverse: regeneratorRuntime.mark(function traverse() {
         var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
         var i, leaf, generator, result, childLeaf;
@@ -5890,18 +6243,38 @@ var leafPrototype = {
     // querying this leaf's relationship to other leafs
     //
 
+    /**
+     * Is this instance the parent of leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isParentOf: function isParentOf(leaf) {
         return leaf.getParent().equals(this);
     },
 
+    /**
+     * Is this instance a child of leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isChildOf: function isChildOf(leaf) {
         return this.getParent().equals(leaf);
     },
 
+    /**
+     * Is this instance an ancestor of leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isAncestorOf: function isAncestorOf(leaf) {
         return leaf.isDescendantOf(this);
     },
 
+    /**
+     * Is this instance a descendant of leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isDescendantOf: function isDescendantOf(leaf) {
         var parent = this.getParent();
         while (parent) {
@@ -5913,22 +6286,47 @@ var leafPrototype = {
         return false;
     },
 
+    /**
+     * Is this instance a sibling of leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isSibling: function isSibling(leaf) {
         return this.getParent() === leaf.getParent();
     },
 
+    /**
+     * Is this instance before leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isBefore: function isBefore(leaf) {
         return this.isSibling(leaf) && leaf.position > this.position;
     },
 
+    /**
+     * Is this instance after leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isAfter: function isAfter(leaf) {
         return this.isSibling(leaf) && leaf.position < this.position;
     },
 
+    /**
+     * Is this instance "left of" leaf (i.e., has a lower level)?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isLeftOf: function isLeftOf(leaf) {
         return leaf.level > this.level;
     },
 
+    /**
+     * Is this instance "right of" leaf (i.e., has a higher level)?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isRightOf: function isRightOf(leaf) {
         return leaf.level < this.level;
     },
@@ -5937,6 +6335,10 @@ var leafPrototype = {
     // how this leaf represents itself
     //
 
+    /**
+     * Expand this leaf.
+     * @param {Boolean} [deep=false] - expand the children of this leaf, recursively
+     */
     expand: function expand() {
         var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
@@ -5946,7 +6348,13 @@ var leafPrototype = {
         this.isExpanded = true;
     },
 
-    expandChildren: function expandChildren(deep) {
+    /**
+     * Expand the children of this leaf.
+     * @param {Boolean} [deep=false] - expand the children of each child, recursively
+     */
+    expandChildren: function expandChildren() {
+        var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
         var generator = this.traverse(deep);
         var result = generator.next();
         while (!result.done) {
@@ -5957,6 +6365,10 @@ var leafPrototype = {
         }
     },
 
+    /**
+     * Collapse this leaf.
+     * @param {Boolean} [deep=false] - collapse the children of this leaf, recursively
+     */
     collapse: function collapse() {
         var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
@@ -5966,6 +6378,10 @@ var leafPrototype = {
         this.isExpanded = false;
     },
 
+    /**
+     * Collapse the children of this leaf.
+     * @param {Boolean} [deep=false] - collapse the children of each child, recursively
+     */
     collapseChildren: function collapseChildren() {
         var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
@@ -5978,39 +6394,73 @@ var leafPrototype = {
         }
     },
 
+    /**
+     * Toggle (expand/collapse) this instance.
+     * @returns {*}
+     */
     toggle: function toggle() {
         return this.isExpanded ? this.collapse() : this.expand();
     },
 
+    /**
+     * Mark this leaf as being renamed.
+     */
     requestLabelChange: function requestLabelChange() {
         this.isBeingRenamed = true;
     },
 
+    /**
+     * Unmark this leaf as being renamed.
+     */
     cancelLabelChange: function cancelLabelChange() {
         this.isBeingRenamed = false;
     },
 
+    /**
+     * Apply a label change to this leaf.
+     * @param {String} label
+     */
     commitLabelChange: function commitLabelChange(label) {
         this.label = label;
         this.isBeingRenamed = false;
     },
 
+    /**
+     * Set (override) the custom attributes of this leaf.
+     * @param {Object} [attributes={}]
+     */
     setAttributes: function setAttributes() {
         var attributes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         this.attributes = attributes;
     },
 
+    /**
+     * Set a custom attribute for this leaf.
+     * @param {String} key
+     * @param {*} value
+     */
     setAttribute: function setAttribute(key, value) {
         this.attributes[key] = value;
     },
 
+    /**
+     * Merge the attributes of this leaf with attributes.
+     * @param {Object} [attributes={}]
+     */
     mergeAttributes: function mergeAttributes() {
         var attributes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         this.attributes = Object.assign(this.attributes, attributes);
     },
 
+    /**
+     * Does this leaf have a given attribute? If withValue is supplied,
+     *   does the attribute also have the given value?
+     * @param {String} key - attribute name
+     * @param {*} [withValue=null] - value to test for
+     * @returns {Boolean}
+     */
     hasAttribute: function hasAttribute(key) {
         var withValue = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
@@ -6021,6 +6471,14 @@ var leafPrototype = {
         return this.attributes[key] === withValue;
     },
 
+    /**
+     * Does any child of this instance have the given attribute? If withValue
+     *   is supplied, does the attribute also have the given value?
+     * @param {Boolean} deep - check the children of each child, recursively
+     * @param {String} key - attribute name
+     * @param {*} [withValue=null] - value to test for
+     * @returns {Boolean}
+     */
     anyChildHasAttribute: function anyChildHasAttribute(deep, key) {
         var withValue = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
@@ -6040,6 +6498,10 @@ var leafPrototype = {
     // utility methods
     //
 
+    /**
+     * Update the internal positions of all child leafs.
+     * @private
+     */
     _updatePositions: function _updatePositions() {
         var maxPosition = this.length() - 1;
         var generator = this.traverse();
@@ -6054,14 +6516,27 @@ var leafPrototype = {
         }
     },
 
+    /**
+     * Does this instance equal (identity) another reference?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     equals: function equals(leaf) {
         return leaf === this;
     },
 
+    /**
+     * How many child leafs does this instance have?
+     * @returns {Number}
+     */
     length: function length() {
         return this.leafCount;
     },
 
+    /**
+     * Serialize this instance as a string.
+     * @returns {String}
+     */
     toString: function toString() {
         var id = this.id,
             label = this.label,
@@ -6073,10 +6548,10 @@ var leafPrototype = {
 };
 
 /**
- * A leaf node that may or may not also be a tree
+ * Creates a Leaf instance.
  * @param {String} label
  * @param {Boolean} [isExpanded=false]
- * @param {Boolean} isActive
+ * @param {Boolean} [isActive=true]
  * @return {Leaf}
  * @constructor
  */
@@ -6085,7 +6560,77 @@ exports.Leaf = _Leaf = function Leaf() {
     var isExpanded = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
     var isActive = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
-    /** @type {Leaf} **/
+    /**
+     * @typedef {Object} Leaf
+     * @augments {leafPrototype}
+     * @property {Number} id - unique, internal identifier
+     * @property {Leaf|null} parent
+     * @property {Array.<Leaf>} leafs
+     * @property {Number} leafCount
+     * @property {String} label
+     * @property {Number} level
+     * @property {Number} position
+     * @property {Boolean} isRoot
+     * @property {Boolean} isFirstSibling
+     * @property {Boolean} isLastSibling
+     * @property {Boolean} isExpanded
+     * @property {Boolean} isBeingRenamed
+     * @property {Boolean} isBeingGrafted
+     * @property {Boolean} isActive
+     * @property {Object} attributes
+     * @method {Function} moveBefore
+     * @method {Function} moveAfter
+     * @method {Function} makeParentOf
+     * @method {Function} makeChildOf
+     * @method {Function} remove
+     * @method {Function} move
+     * @method {Function} branch
+     * @method {Function} graft
+     * @method {Function} ungraft
+     * @method {Function} inosculate
+     * @method {Function} activate
+     * @method {Function} deactivate
+     * @method {Function} getParent
+     * @method {Function} hasChildren
+     * @method {Function} hasAnyActiveChildren
+     * @method {Function} hasAnyInactiveChildren
+     * @method {Function} getChildren
+     * @method {Function} getFirstChild
+     * @method {Function} getLastChild
+     * @method {Function} getSiblings
+     * @method {Function} getSiblingsBefore
+     * @method {Function} getSiblingsAfter
+     * @method {Function} get
+     * @method {Function} traverse
+     * @method {Function} find
+     * @method {Function} findByAttributes
+     * @method {Function} isParentOf
+     * @method {Function} isChildOf
+     * @method {Function} isAncestorOf
+     * @method {Function} isDescendantOf
+     * @method {Function} isSibling
+     * @method {Function} isBefore
+     * @method {Function} isAfter
+     * @method {Function} isLeftOf
+     * @method {Function} isRightOf
+     * @method {Function} expand
+     * @method {Function} expandChildren
+     * @method {Function} collapse
+     * @method {Function} collapseChildren
+     * @method {Function} toggle
+     * @method {Function} requestLabelChange
+     * @method {Function} cancelLabelChange
+     * @method {Function} commitLabelChange
+     * @method {Function} setAttributes
+     * @method {Function} setAttribute
+     * @method {Function} mergeAttributes
+     * @method {Function} hasAttribute
+     * @method {Function} anyChildHasAttribute
+     * @method {Function} equals
+     * @method {Function} length
+     * @method {Function} toString
+     *
+     */
     var instance = Object.create(leafPrototype);
     /** @type {Leaf} parent node */
     instance.parent = null;
@@ -6122,6 +6667,10 @@ exports.Leaf = _Leaf = function Leaf() {
 
 leafPrototype.constructor = _Leaf;
 
+/**
+ * Internal instance count. Used to determine new Leaf IDs.
+ * @type {Number}
+ */
 _Leaf.instanceCount = 0;
 
 /***/ }),

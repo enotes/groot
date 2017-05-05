@@ -9,7 +9,19 @@ const eventArgsPrototype = {
     isAsync: false,
 };
 
+/**
+ * Creates an instance of EventArgs
+ * @param {Object} [properties] - additional properties to append to
+ *   the EventArgs object
+ * @returns {EventArgs}
+ * @constructor
+ */
 export const EventArgs = function (properties) {
+    /**
+     * @typedef {Object} EventArgs
+     * @augments {eventArgsPrototype}
+     * @property {Boolean} isAsync=false
+     */
     return Object.assign(
         Object.create(eventArgsPrototype),
         properties
@@ -20,7 +32,6 @@ eventArgsPrototype.constructor = EventArgs;
 
 //
 // "Async" event args
-// Raises events to handle
 //
 
 const ASYNC_EVENTS = {
@@ -31,6 +42,9 @@ const ASYNC_EVENTS = {
 const asyncEventArgsPrototype = {
     isAsync: true,
 
+    /**
+     * Cancel this async event
+     */
     cancel: function () {
         if (this.isComitted) {
             return;
@@ -39,6 +53,11 @@ const asyncEventArgsPrototype = {
         this.emit(ASYNC_EVENTS.CANCELLED);
     },
 
+    /**
+     * Commit this async event
+     * @param {Object} [result] - result meta-data to be merged into
+     *   a leaf's attributes on commit
+     */
     commit: function (result = {}) {
         if (this.isCancelled) {
             return;
@@ -49,7 +68,28 @@ const asyncEventArgsPrototype = {
     }
 };
 
+/**
+ * Creates an instance of AsyncEventArgs
+ * @param {Object} [properties] - additional properties to append to
+ *   the AsyncEventArgs object
+ * @returns {AsyncEventArgs}
+ * @constructor
+ */
 export const AsyncEventArgs = function (properties) {
+    /**
+     * @typedef {Object} AsyncEventArgs
+     * @augments {EventEmitter3}
+     * @augments {asyncEventArgsPrototype}
+     * @property {Boolean} isAsync=true
+     * @property {Boolean} isCommitted
+     * @property {Boolean} isCancelled
+     * @property {Object} result - result meta-data to be merged into
+     *   a leaf's attributes on commit
+     * @method {Function} commit
+     * @method {Function} cancel
+     * @method {Function} on
+     * @method {Function} emit
+     */
     const instance = Object.assign(
         new Emitter(),
         asyncEventArgsPrototype,
@@ -63,4 +103,8 @@ export const AsyncEventArgs = function (properties) {
 
 asyncEventArgsPrototype.constructor = AsyncEventArgs;
 
+/**
+ * Events raised by AsyncEventArgs
+ * @type {{CANCELLED: string, COMMITTED: string}}
+ */
 AsyncEventArgs.EVENTS = ASYNC_EVENTS;

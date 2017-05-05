@@ -20,46 +20,218 @@ const CAPTURE_KEYS = ENTER_KEYS.concat([
 // Groot
 //
 
+/**
+ * Groot events
+ * @type {{RENDERING: string, RENDERED: string, LEAF: {MOVING: string, MOVED: string, CLICKING: string, CLICKED: string, DRAGGING: string, DRAGGED: string, DROPPING: string, DROPPED: string, RENAMING: string, RENAMED: string, UNNAMED: string, EXPANDING: string, EXPANDED: string, COLLAPSING: string, COLLAPSED: string, DELETING: string, DELETED: string, CREATING: string, CREATED: string, PRUNING: string, PRUNED: string, ACTIVATING: string, ACTIVATED: string, DISABLING: string, DISABLED: string}, MENU: {CLICKING: string, CLICKED: string, SHOWING: string, SHOWN: string, HIDING: string, HIDDEN: string}}}
+ */
 const EVENTS = {
+    /**
+     * rendering
+     * - async:no
+     * - multisource:no
+     */
     RENDERING: 'rendering',
+    /**
+     * rendered
+     * - async:no
+     * - multisource:no
+     */
     RENDERED: 'rendered',
+    /**
+     * leaf-specific events
+     */
     LEAF: {
-        /** Raises async event args */
+        /**
+         * leaf.moving
+         * - async:yes
+         * - multisource:yes
+         */
         MOVING: 'leaf.moving',
+        /**
+         * leaf.moved
+         * - async:no
+         * - multisource:yes
+         */
         MOVED: 'leaf.moved',
+        /**
+         * leaf.clicking
+         * - async:no
+         * - multisource:no
+         */
         CLICKING: 'leaf.clicking',
+        /**
+         * leaf.clicked
+         * - async:no
+         * - multisource:no
+         */
         CLICKED: 'leaf.clicked',
+        /**
+         * leaf.dragging
+         * - async:no
+         * - multisource:no
+         */
         DRAGGING: 'leaf.dragging',
+        /**
+         * leaf.dragged
+         * - async:no
+         * - multisource:no
+         */
         DRAGGED: 'leaf.dragged',
+        /**
+         * leaf.dropping
+         * - async:yes
+         * - multisource:yes
+         */
         DROPPING: 'leaf.dropping',
+        /**
+         * leaf.dropped
+         * - async:no
+         * - multisource:yes
+         */
         DROPPED: 'leaf.dropped',
-        /** Raises async event args */
+        /**
+         * leaf.renaming
+         * - async:yes
+         * - multisource:no
+         */
         RENAMING: 'leaf.renaming',
+        /**
+         * leaf.renamed
+         * - async:no
+         * - multisource:no
+         */
         RENAMED: 'leaf.renamed',
+        /**
+         * leaf.unnamed
+         * - async:no
+         * - multisource:no
+         */
         UNNAMED: 'leaf.unnamed',
+        /**
+         * leaf.expanding
+         * - async:no
+         * - multisource:no
+         */
         EXPANDING: 'leaf.expanding',
+        /**
+         * leaf.expanded
+         * - async:no
+         * - multisource:no
+         */
         EXPANDED: 'leaf.expanded',
+        /**
+         * leaf.collapsing
+         * - async:no
+         * - multisource:no
+         */
         COLLAPSING: 'leaf.collapsing',
+        /**
+         * leaf.collapsed
+         * - async:no
+         * - multisource:no
+         */
         COLLAPSED: 'leaf.collapsed',
-        /** Raises async event args */
+        /**
+         * leaf.deleting
+         * - async:yes
+         * - multisource:no
+         */
         DELETING: 'leaf.deleting',
+        /**
+         * leaf.deleted
+         * - async:no
+         * - multisource:no
+         */
         DELETED: 'leaf.deleted',
+        /**
+         * leaf.creating
+         * - async:no
+         * - multisource:no
+         */
         CREATING: 'leaf.creating',
+        /**
+         * leaf.created
+         * - async:no
+         * - multisource:no
+         */
         CREATED: 'leaf.created',
+        /**
+         * leaf.pruning
+         * - async:no
+         * - multisource:no
+         */
         PRUNING: 'leaf.pruning',
+        /**
+         * leaf.pruned
+         * - async:no
+         * - multisource:no
+         */
         PRUNED: 'leaf.pruned',
+        /**
+         * leaf.activating
+         * - async:no
+         * - multisource:no
+         */
         ACTIVATING: 'leaf.activating',
+        /**
+         * leaf.activated
+         * - async:no
+         * - multisource:no
+         */
         ACTIVATED: 'leaf.activated',
+        /**
+         * leaf.disabling
+         * - async:no
+         * - multisource:no
+         */
         DISABLING: 'leaf.disabling',
+        /**
+         * leaf.disabled
+         * - async:no
+         * - multisource:no
+         */
         DISABLED: 'leaf.disabled',
     },
+    /**
+     * menu-specific events
+     */
     MENU: {
-        CLICKING: 'menu.clicking',
-        CLICKED: 'menu.clicked',
-        SHOWING: 'menu.showing',
-        SHOWN: 'menu.shown',
-        HIDING: 'menu.hiding',
-        HIDDEN: 'menu.hidden',
+        /**
+         * menu.clicking
+         * - async:no
+         * - multisource:no
+         */
+        CLICKING: '_menu.clicking',
+        /**
+         * menu.clicked
+         * - async:no
+         * - multisource:no
+         */
+        CLICKED: '_menu.clicked',
+        /**
+         * menu.showing
+         * - async:no
+         * - multisource:no
+         */
+        SHOWING: '_menu.showing',
+        /**
+         * menu.shown
+         * - async:no
+         * - multisource:no
+         */
+        SHOWN: '_menu.shown',
+        /**
+         * menu.hiding
+         * - async:no
+         * - multisource:no
+         */
+        HIDING: '_menu.hiding',
+        /**
+         * menu.hidden
+         * - async:no
+         * - multisource:no
+         */
+        HIDDEN: '_menu.hidden',
     },
 };
 
@@ -91,11 +263,12 @@ const grootPrototype = {
     /**
      * Prune a node from the tree.
      *   - Will raise synchronous event.
-     *   - Is not cancelable.
-     * @param attributes
+     *   - Is not cancellable.
+     * @param {Object} attributes - custom attributes used to find
+     *   the leaf to be pruned
      */
     prune: function (attributes = {}) {
-        const sourceLeaf = this.tree.findByAttributes(attributes);
+        const sourceLeaf = this._tree.findByAttributes(attributes);
         const parentLeaf = sourceLeaf.getParent();
 
         if (!parentLeaf) {
@@ -119,11 +292,12 @@ const grootPrototype = {
     /**
      * Remove a node from the tree.
      *   - Will raise async event.
-     *   - Is cancelable.
-     * @param attributes
+     *   - Is cancellable.
+     * @param {Object} attributes - custom attributes used to find
+     *   the leaf to be removed
      */
     remove: function (attributes = {}) {
-        const sourceLeaf = this.tree.findByAttributes(attributes);
+        const sourceLeaf = this._tree.findByAttributes(attributes);
         const parentLeaf = sourceLeaf.getParent();
 
         if (!parentLeaf) {
@@ -145,8 +319,17 @@ const grootPrototype = {
         });
     },
 
+    /**
+     * Rename a node.
+     *   - Will raise asynchronous event.
+     *   - Is cancellable.
+     * @param {Object} attributes - custom attributes used to find
+     *   the leaf to be renamed
+     * @param {String} label
+     * @returns {Promise.<AsyncEventArgs>}
+     */
     rename: function (attributes, label) {
-        const sourceLeaf = this.tree.findByAttributes(attributes);
+        const sourceLeaf = this._tree.findByAttributes(attributes);
 
         if (sourceLeaf.label === label) {
             return;
@@ -168,8 +351,15 @@ const grootPrototype = {
         });
     },
 
+    /**
+     * Expand a node.
+     *   - Will raise synchronous event.
+     *   - Is not cancellable.
+     * @param {Object} attributes - custom attributes used to find
+     *   the leaf to be expanded
+     */
     expand: function (attributes) {
-        const sourceLeaf = this.tree.findByAttributes(attributes);
+        const sourceLeaf = this._tree.findByAttributes(attributes);
 
         if (sourceLeaf.isExpanded) {
             return;
@@ -191,9 +381,13 @@ const grootPrototype = {
         this._renderLeaf(listItem, sourceLeaf);
     },
 
+    /**
+     * Disable this instance. No events will be fired while
+     *   the instance is disabled.
+     */
     disable: function () {
         CLICKABLE_CONTROLS.forEach((controlClass) => {
-            this.containerElement.querySelectorAll(controlClass)
+            this._containerElement.querySelectorAll(controlClass)
                 .forEach((element) => {
                     element.style.cursor = 'wait';
                     element.setAttribute('disabled', 'disabled');
@@ -202,9 +396,13 @@ const grootPrototype = {
         this.isEnabled = false;
     },
 
+    /**
+     * Enable this instance. Events will be fired while the
+     *   instance is enabled.
+     */
     enable: function () {
         CLICKABLE_CONTROLS.forEach((controlClass) => {
-            this.containerElement.querySelectorAll(controlClass)
+            this._containerElement.querySelectorAll(controlClass)
                 .forEach((element) => {
                     element.style.cursor = 'default';
                     element.removeAttribute('disabled');
@@ -213,10 +411,13 @@ const grootPrototype = {
         this.isEnabled = true;
     },
 
+    /**
+     * Render this instance in the DOM.
+     */
     render: function () {
         this._raise(EVENTS.RENDERING, {});
-        this.containerElement.innerHTML = treeTemplate(this.tree);
-        const inputElement = this.containerElement
+        this._containerElement.innerHTML = treeTemplate(this._tree);
+        const inputElement = this._containerElement
             .querySelector('.groot-leaf__label-field');
         if (inputElement) {
             inputElement.focus();
@@ -224,6 +425,9 @@ const grootPrototype = {
         this._raise(EVENTS.RENDERED, {});
     },
 
+    /**
+     * Close this instance's menu, if it is open.
+     */
     closeMenu: function () {
         this._hideMenu();
     },
@@ -233,7 +437,7 @@ const grootPrototype = {
     //
 
     _findListItem: function (leaf) {
-        return this.containerElement
+        return this._containerElement
             .querySelector(`[data-groot-id="${leaf.id}"]`);
     },
 
@@ -309,16 +513,16 @@ const grootPrototype = {
     },
 
     _hideMenu: function () {
-        if (!this.menu.isShowing) {
+        if (!this._menu.isShowing) {
             return;
         }
         this._raise(EVENTS.MENU.HIDING);
-        this.menu.hide();
-        this._raise(EVENTS.MENU.HIDDEN, this.menu.options);
+        this._menu.hide();
+        this._raise(EVENTS.MENU.HIDDEN, this._menu.options);
     },
 
     _showMenu: function (listItem, optionOverrides = {}) {
-        if (this.menu.isShowing) {
+        if (this._menu.isShowing) {
             this._hideMenu();
         }
         const options = GrootMenu.createOptions(optionOverrides);
@@ -326,13 +530,13 @@ const grootPrototype = {
             return;
         }
         this._raise(EVENTS.MENU.SHOWING);
-        this.menu.show(listItem, options);
-        this._raise(EVENTS.MENU.SHOWN, this.menu.options);
+        this._menu.show(listItem, options);
+        this._raise(EVENTS.MENU.SHOWN, this._menu.options);
     },
 
     _moveLeafUp: function (listItem) {
         const sourceID = Number(listItem.getAttribute('data-groot-id'));
-        const sourceLeaf = this.tree.find(sourceID);
+        const sourceLeaf = this._tree.find(sourceID);
         const siblingLeaf = sourceLeaf.getSiblingBefore();
 
         if (!siblingLeaf) {
@@ -368,7 +572,7 @@ const grootPrototype = {
      */
     _moveLeafDown: function (listItem) {
         const sourceID = Number(listItem.getAttribute('data-groot-id'));
-        const sourceLeaf = this.tree.find(sourceID);
+        const sourceLeaf = this._tree.find(sourceID);
         const siblingLeaf = sourceLeaf.getSiblingAfter();
 
         if (!siblingLeaf) {
@@ -409,7 +613,7 @@ const grootPrototype = {
             return false;
         }
         // can we handle this event type?
-        const handlers = this.handlers[e.type];
+        const handlers = this._handlers[e.type];
         if (!handlers) {
             return true;
         }
@@ -434,7 +638,7 @@ const grootPrototype = {
             listItem = closestGrootListItem(trigger),
             sourceID = Number(listItem.getAttribute('data-groot-id')),
             isRightClick = (e.button === 2),
-            sourceLeaf = this.tree.find(sourceID);
+            sourceLeaf = this._tree.find(sourceID);
 
         const CLICK_ARGS = {
             source: Object.assign({
@@ -495,7 +699,7 @@ const grootPrototype = {
             listItem = closestGrootListItem(trigger),
             sourceID = Number(listItem.getAttribute('data-groot-id')),
             isRightClick = (e.button === 2),
-            sourceLeaf = this.tree.find(sourceID);
+            sourceLeaf = this._tree.find(sourceID);
 
         const CLICK_ARGS = {
             source: Object.assign({
@@ -528,7 +732,7 @@ const grootPrototype = {
         const trigger = e.target,
             listItem = closestGrootListItem(trigger),
             sourceID = Number(listItem.getAttribute('data-groot-id')),
-            sourceLeaf = this.tree.find(sourceID);
+            sourceLeaf = this._tree.find(sourceID);
 
         this._showMenu(listItem, {
             sourceID,
@@ -565,7 +769,7 @@ const grootPrototype = {
         const trigger = e.target,
             listItem = closestGrootListItem(trigger),
             sourceID = Number(listItem.getAttribute('data-groot-id')),
-            leaf = this.tree.find(sourceID);
+            leaf = this._tree.find(sourceID);
 
         if (leaf.isBeingRenamed) {
             e.preventDefault();
@@ -589,8 +793,8 @@ const grootPrototype = {
             listItem = closestGrootListItem(trigger),
             targetID = Number(listItem.getAttribute('data-groot-id')),
             sourceID = Number(e.dataTransfer.getData('text')),
-            sourceLeaf = this.tree.find(sourceID),
-            targetLeaf = this.tree.find(targetID);
+            sourceLeaf = this._tree.find(sourceID),
+            targetLeaf = this._tree.find(targetID);
 
         const DRAG_ARGS = {
             source: Object.assign({
@@ -675,7 +879,7 @@ const grootPrototype = {
 
         const listItem = closestGrootListItem(trigger),
             sourceID = Number(listItem.getAttribute('data-groot-id')),
-            sourceLeaf = this.tree.find(sourceID);
+            sourceLeaf = this._tree.find(sourceID);
 
         const isCommitting = (ENTER_KEYS.indexOf(e.keyCode) >= 0);
         const isCancelling = (KeyCode.KEY_ESCAPE === e.keyCode);
@@ -757,8 +961,8 @@ const grootPrototype = {
             action: 'create'
         });
 
-        const { sourceID } = this.menu.options,
-            sourceLeaf = this.tree.find(sourceID),
+        const { sourceID } = this._menu.options,
+            sourceLeaf = this._tree.find(sourceID),
             graftedLeaf = sourceLeaf.graft();
 
         graftedLeaf.requestLabelChange();
@@ -774,7 +978,7 @@ const grootPrototype = {
         sourceLeaf.expand();
         this._raise(EVENTS.LEAF.EXPANDED, EXPAND_ARGS);
 
-        this._renderLeaf(this.menu.listItemElement, sourceLeaf);
+        this._renderLeaf(this._menu.listItemElement, sourceLeaf);
 
         this._raise(EVENTS.MENU.CLICKED, {
             action: 'create'
@@ -788,12 +992,12 @@ const grootPrototype = {
             action: 'rename'
         });
 
-        const { sourceID } = this.menu.options,
-            sourceLeaf = this.tree.find(sourceID);
+        const { sourceID } = this._menu.options,
+            sourceLeaf = this._tree.find(sourceID);
 
         sourceLeaf.requestLabelChange();
 
-        this._renderLeaf(this.menu.listItemElement, sourceLeaf);
+        this._renderLeaf(this._menu.listItemElement, sourceLeaf);
 
         this._raise(EVENTS.MENU.CLICKED, {
             action: 'rename'
@@ -807,8 +1011,8 @@ const grootPrototype = {
             action: 'delete'
         });
 
-        const { sourceID } = this.menu.options,
-            sourceLeaf = this.tree.find(sourceID),
+        const { sourceID } = this._menu.options,
+            sourceLeaf = this._tree.find(sourceID),
             parentLeaf = sourceLeaf.getParent();
 
         if (!parentLeaf) {
@@ -824,7 +1028,7 @@ const grootPrototype = {
             }, sourceLeaf.attributes)
         };
 
-        const listItem = this.menu.listItemElement;
+        const listItem = this._menu.listItemElement;
 
         this._raiseAsync(EVENTS.LEAF.DELETING, DELETE_ARGS).then(() => {
             parentLeaf.remove(sourceLeaf);
@@ -846,8 +1050,8 @@ const grootPrototype = {
             action: 'move-to'
         });
 
-        const { sourceID } = this.menu.options,
-            sourceLeaf = this.tree.find(sourceID);
+        const { sourceID } = this._menu.options,
+            sourceLeaf = this._tree.find(sourceID);
 
         const MOVE_ARGS = {
             direction: 'to',
@@ -872,7 +1076,7 @@ const grootPrototype = {
             action: 'move-up'
         });
 
-        this._moveLeafUp(this.menu.listItemElement);
+        this._moveLeafUp(this._menu.listItemElement);
 
         this._hideMenu();
 
@@ -888,7 +1092,7 @@ const grootPrototype = {
             action: 'move-down'
         });
 
-        this._moveLeafDown(this.menu.listItemElement);
+        this._moveLeafDown(this._menu.listItemElement);
 
         this._hideMenu();
 
@@ -904,8 +1108,8 @@ const grootPrototype = {
             action: 'move-first'
         });
 
-        const { sourceID } = this.menu.options;
-        const sourceLeaf = this.tree.find(sourceID);
+        const { sourceID } = this._menu.options;
+        const sourceLeaf = this._tree.find(sourceID);
         const parentLeaf = sourceLeaf.getParent();
         if (!parentLeaf) {
             return false;
@@ -934,7 +1138,7 @@ const grootPrototype = {
             MOVE_ARGS.source.position = sourceLeaf.position;
             MOVE_ARGS.target.position = firstLeaf.position;
             this._raise(EVENTS.LEAF.MOVED, MOVE_ARGS);
-            this._renderParentLeaf(this.menu.listItemElement, sourceLeaf);
+            this._renderParentLeaf(this._menu.listItemElement, sourceLeaf);
         });
 
         this._raise(EVENTS.MENU.CLICKED, {
@@ -949,8 +1153,8 @@ const grootPrototype = {
             action: 'move-last'
         });
 
-        const { sourceID } = this.menu.options;
-        const sourceLeaf = this.tree.find(sourceID);
+        const { sourceID } = this._menu.options;
+        const sourceLeaf = this._tree.find(sourceID);
         const parentLeaf = sourceLeaf.getParent();
         if (!parentLeaf) {
             return false;
@@ -979,7 +1183,7 @@ const grootPrototype = {
             MOVE_ARGS.source.position = sourceLeaf.position;
             MOVE_ARGS.target.position = lastLeaf.position;
             this._raise(EVENTS.LEAF.MOVED, MOVE_ARGS);
-            this._renderParentLeaf(this.menu.listItemElement, sourceLeaf);
+            this._renderParentLeaf(this._menu.listItemElement, sourceLeaf);
         });
 
         this._raise(EVENTS.MENU.CLICKED, {
@@ -994,9 +1198,9 @@ const grootPrototype = {
             action: 'move-before'
         });
 
-        const { sourceID, targetID } = this.menu.options,
-            sourceLeaf = this.tree.find(sourceID),
-            targetLeaf = this.tree.find(targetID),
+        const { sourceID, targetID } = this._menu.options,
+            sourceLeaf = this._tree.find(sourceID),
+            targetLeaf = this._tree.find(targetID),
             sourceParent = sourceLeaf.getParent(),
             targetParent = targetLeaf.getParent();
 
@@ -1034,9 +1238,9 @@ const grootPrototype = {
             action: 'move-after'
         });
 
-        const { sourceID, targetID } = this.menu.options,
-            sourceLeaf = this.tree.find(sourceID),
-            targetLeaf = this.tree.find(targetID),
+        const { sourceID, targetID } = this._menu.options,
+            sourceLeaf = this._tree.find(sourceID),
+            targetLeaf = this._tree.find(targetID),
             sourceParent = sourceLeaf.getParent(),
             targetParent = targetLeaf.getParent();
 
@@ -1074,9 +1278,9 @@ const grootPrototype = {
             action: 'make-parent'
         });
 
-        const { sourceID, targetID } = this.menu.options,
-            sourceLeaf = this.tree.find(sourceID),
-            targetLeaf = this.tree.find(targetID);
+        const { sourceID, targetID } = this._menu.options,
+            sourceLeaf = this._tree.find(sourceID),
+            targetLeaf = this._tree.find(targetID);
 
         const MOVE_ARGS = {
             direction: 'parent',
@@ -1123,9 +1327,9 @@ const grootPrototype = {
             action: 'activate-children'
         });
 
-        const { sourceID } = this.menu.options,
-            listItem = this.menu.listItemElement,
-            sourceLeaf = this.tree.find(sourceID);
+        const { sourceID } = this._menu.options,
+            listItem = this._menu.listItemElement,
+            sourceLeaf = this._tree.find(sourceID);
 
         const ACTIVATE_ARGS = {
             deep: true,
@@ -1165,9 +1369,9 @@ const grootPrototype = {
             action: 'disable-children'
         });
 
-        const { sourceID } = this.menu.options,
-            listItem = this.menu.listItemElement,
-            sourceLeaf = this.tree.find(sourceID);
+        const { sourceID } = this._menu.options,
+            listItem = this._menu.listItemElement,
+            sourceLeaf = this._tree.find(sourceID);
 
         const DISABLE_ARGS = {
             deep: true,
@@ -1210,12 +1414,24 @@ const grootPrototype = {
  * @constructor
  */
 export const Groot = function (htmlElement, rootLeaf) {
+    /**
+     * @typedef {Object} Groot
+     * @property {Boolean} isEnabled
+     * @method {Function} prune
+     * @method {Function} remove
+     * @method {Function} rename
+     * @method {Function} expand
+     * @method {Function} disable
+     * @method {Function} enable
+     * @method {Function} render
+     * @method {Function} closeMenu
+     */
     const instance = Object.assign(new Emitter(), grootPrototype);
-    instance.containerElement = htmlElement;
-    instance.tree = rootLeaf;
-    instance.menu = new GrootMenu();
     instance.isEnabled = true;
-    instance.handlers = {
+    instance._containerElement = htmlElement;
+    instance._tree = rootLeaf;
+    instance._menu = new GrootMenu();
+    instance._handlers = {
         'click': {
             // leaf controls
             '.groot-leaf__label': instance._onLeafLabelClicked,
@@ -1267,7 +1483,7 @@ export const Groot = function (htmlElement, rootLeaf) {
         }
     };
 
-    Object.keys(instance.handlers).forEach((event) => {
+    Object.keys(instance._handlers).forEach((event) => {
         htmlElement.addEventListener(
             event,
             instance._captureDOMEvent.bind(instance)
@@ -1287,6 +1503,15 @@ const isString = function (target) {
     return Object.prototype.toString.call(target) === '[object String]';
 };
 
+/**
+ * Wiretap a Groot instance to see all raised events.
+ *   Will automatically commit async events if the async event
+ *   is only being monitored by the wiretap. If other handlers
+ *   are listening for the event, they must commit or cancel
+ *   the eventArgs object.
+ * @param {Groot} groot
+ * @param {Object} events - Groot events object
+ */
 Groot.wireTap = function (groot, events = EVENTS) {
     Object.keys(events).forEach((key) => {
         const event = events[key];

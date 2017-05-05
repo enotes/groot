@@ -4,6 +4,7 @@
 //
 
 // defining here before use to satisfy eslint
+
 export let Leaf;
 
 const leafPrototype = {
@@ -12,14 +13,27 @@ const leafPrototype = {
     // modifying this leaf's relationship to other leafs
     //
 
+    /**
+     * Move this instance before leaf.
+     * @param {Leaf} leaf
+     */
     moveBefore: function (leaf) {
         leaf.getParent().move(this, leaf.position);
     },
 
+    /**
+     * Move this instance after leaf.
+     * @param {Leaf} leaf
+     */
     moveAfter: function (leaf) {
         leaf.getParent().move(this, leaf.position + 1);
     },
 
+    /**
+     * Make this instance a parent of leaf.
+     * @param {Leaf} leaf
+     * @returns {Leaf} - leaf
+     */
     makeParentOf: function (leaf) {
         const oldParent = leaf.getParent();
         if (oldParent) {
@@ -34,10 +48,20 @@ const leafPrototype = {
         return leaf;
     },
 
+    /**
+     * Make this instance a child of leaf.
+     * @param {Leaf} leaf
+     * @returns {Leaf} - leaf
+     */
     makeChildOf: function (leaf) {
         return leaf.makeParentOf(this);
     },
 
+    /**
+     * Remove leaf from this instance's child leafs.
+     * @param {Leaf} leaf
+     * @returns {Leaf} leaf
+     */
     remove: function (leaf) {
         if (!this.isParentOf(leaf)) {
             throw new Error(`leaf ${leaf.id} is not child of node ${this.id}`);
@@ -49,6 +73,12 @@ const leafPrototype = {
         return leaf;
     },
 
+    /**
+     * Move leaf to position within this instance's child leafs.
+     * @param {Leaf} leaf
+     * @param {Number} position
+     * @returns {Leaf} leaf
+     */
     move: function (leaf, position) {
         if (!leaf.getParent().equals(this)) {
             this.makeParentOf(leaf);
@@ -117,10 +147,16 @@ const leafPrototype = {
         return true;
     },
 
+    /**
+     * Activate this instance.
+     */
     activate: function () {
         this.isActive = true;
     },
 
+    /**
+     * Deactivate this instance.
+     */
     deactivate: function () {
         this.isActive = false;
     },
@@ -129,14 +165,27 @@ const leafPrototype = {
     // getting leafs related to this leaf
     //
 
+    /**
+     * Get the parent of this instance.
+     * @returns {Leaf|null}
+     */
     getParent: function () {
         return this.parent;
     },
 
+    /**
+     * Does this instance have any children?
+     * @returns {Boolean}
+     */
     hasChildren: function () {
         return this.length() > 0;
     },
 
+    /**
+     * Does this instance have any active children?
+     * @param {Boolean} [deep=false] - consider children of children, etc.
+     * @returns {Boolean}
+     */
     hasAnyActiveChildren: function (deep = false) {
         const generator = this.traverse(deep);
         let result = generator.next();
@@ -150,6 +199,11 @@ const leafPrototype = {
         return false;
     },
 
+    /**
+     * Does this instance have any inactive children?
+     * @param {Boolean} [deep=true] - consider children of children, etc.
+     * @returns {Boolean}
+     */
     hasAnyInactiveChildren: function (deep = false) {
         const generator = this.traverse(deep);
         let result = generator.next();
@@ -163,10 +217,18 @@ const leafPrototype = {
         return false;
     },
 
+    /**
+     * Get this instance's children.
+     * @returns {Array.<Leaf>}
+     */
     getChildren: function () {
         return this.leafs;
     },
 
+    /**
+     * Get the first child in this instance.
+     * @returns {Leaf|null}
+     */
     getFirstChild: function () {
         if (this.length() === 0) {
             return null;
@@ -174,6 +236,10 @@ const leafPrototype = {
         return this.leafs[0];
     },
 
+    /**
+     * Get the last child in this instance.
+     * @returns {Leaf|null}
+     */
     getLastChild: function () {
         if (this.length() === 0) {
             return null;
@@ -181,6 +247,10 @@ const leafPrototype = {
         return this.leafs[this.length() - 1];
     },
 
+    /**
+     * Get the siblings of this instance.
+     * @returns {Array.<Leaf>}
+     */
     getSiblings: function () {
         const siblings = this.getParent()
             .getChildren()
@@ -190,6 +260,10 @@ const leafPrototype = {
         return siblings;
     },
 
+    /**
+     * Get the siblings before this instance.
+     * @returns {Array.<Leaf>|null}
+     */
     getSiblingBefore: function () {
         if (this.isRoot) {
             return null;
@@ -201,6 +275,10 @@ const leafPrototype = {
             .get(this.position - 1);
     },
 
+    /**
+     * Get the siblings after this instance.
+     * @returns {Array.<Leaf>|null}
+     */
     getSiblingAfter: function () {
         if (this.isRoot) {
             return null;
@@ -212,10 +290,20 @@ const leafPrototype = {
             .get(this.position + 1);
     },
 
+    /**
+     * Get a child leaf of this instance by position.
+     * @param {Number} position
+     * @returns {Leaf|null}
+     */
     get: function (position) {
         return this.leafs[position];
     },
 
+    /**
+     * Create a generator to traverse this instance's child leafs.
+     * @param {Boolean} [deep=false] - traverse children of children, etc.
+     * @return {Generator}
+     */
     traverse: function* (deep = false) {
         for (let i = 0; i < this.length(); i += 1) {
             const leaf = this.get(i);
@@ -293,18 +381,38 @@ const leafPrototype = {
     // querying this leaf's relationship to other leafs
     //
 
+    /**
+     * Is this instance the parent of leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isParentOf: function (leaf) {
         return leaf.getParent().equals(this);
     },
 
+    /**
+     * Is this instance a child of leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isChildOf: function (leaf) {
         return this.getParent().equals(leaf);
     },
 
+    /**
+     * Is this instance an ancestor of leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isAncestorOf: function (leaf) {
         return leaf.isDescendantOf(this);
     },
 
+    /**
+     * Is this instance a descendant of leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isDescendantOf: function (leaf) {
         let parent = this.getParent();
         while (parent) {
@@ -316,24 +424,49 @@ const leafPrototype = {
         return false;
     },
 
+    /**
+     * Is this instance a sibling of leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isSibling: function (leaf) {
         return this.getParent() === leaf.getParent();
     },
 
+    /**
+     * Is this instance before leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isBefore: function (leaf) {
         return this.isSibling(leaf) &&
             (leaf.position > this.position);
     },
 
+    /**
+     * Is this instance after leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isAfter: function (leaf) {
         return this.isSibling(leaf) &&
             leaf.position < this.position;
     },
 
+    /**
+     * Is this instance "left of" leaf (i.e., has a lower level)?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isLeftOf: function (leaf) {
         return leaf.level > this.level;
     },
 
+    /**
+     * Is this instance "right of" leaf (i.e., has a higher level)?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     isRightOf: function (leaf) {
         return leaf.level < this.level;
     },
@@ -342,6 +475,10 @@ const leafPrototype = {
     // how this leaf represents itself
     //
 
+    /**
+     * Expand this leaf.
+     * @param {Boolean} [deep=false] - expand the children of this leaf, recursively
+     */
     expand: function (deep = false) {
         if (deep) {
             this.expandChildren(deep);
@@ -349,7 +486,11 @@ const leafPrototype = {
         this.isExpanded = true;
     },
 
-    expandChildren: function (deep) {
+    /**
+     * Expand the children of this leaf.
+     * @param {Boolean} [deep=false] - expand the children of each child, recursively
+     */
+    expandChildren: function (deep = false) {
         const generator = this.traverse(deep);
         let result = generator.next();
         while (!result.done) {
@@ -360,6 +501,10 @@ const leafPrototype = {
         }
     },
 
+    /**
+     * Collapse this leaf.
+     * @param {Boolean} [deep=false] - collapse the children of this leaf, recursively
+     */
     collapse: function (deep = false) {
         if (deep) {
             this.collapseChildren(deep);
@@ -367,6 +512,10 @@ const leafPrototype = {
         this.isExpanded = false;
     },
 
+    /**
+     * Collapse the children of this leaf.
+     * @param {Boolean} [deep=false] - collapse the children of each child, recursively
+     */
     collapseChildren: function (deep = false) {
         const generator = this.traverse(deep);
         let result = generator.next();
@@ -377,37 +526,71 @@ const leafPrototype = {
         }
     },
 
+    /**
+     * Toggle (expand/collapse) this instance.
+     * @returns {*}
+     */
     toggle: function () {
         return this.isExpanded ?
             this.collapse() :
             this.expand();
     },
 
+    /**
+     * Mark this leaf as being renamed.
+     */
     requestLabelChange: function () {
         this.isBeingRenamed = true;
     },
 
+    /**
+     * Unmark this leaf as being renamed.
+     */
     cancelLabelChange: function () {
         this.isBeingRenamed = false;
     },
 
+    /**
+     * Apply a label change to this leaf.
+     * @param {String} label
+     */
     commitLabelChange: function (label) {
         this.label = label;
         this.isBeingRenamed = false;
     },
 
+    /**
+     * Set (override) the custom attributes of this leaf.
+     * @param {Object} [attributes={}]
+     */
     setAttributes: function (attributes = {}) {
         this.attributes = attributes;
     },
 
+    /**
+     * Set a custom attribute for this leaf.
+     * @param {String} key
+     * @param {*} value
+     */
     setAttribute: function (key, value) {
         this.attributes[key] = value;
     },
 
+    /**
+     * Merge the attributes of this leaf with attributes.
+     * @param {Object} [attributes={}]
+     */
     mergeAttributes: function (attributes = {}) {
         this.attributes = Object.assign(this.attributes, attributes);
     },
 
+    /**
+     * Does this leaf have a given attribute? If withValue is supplied,
+     *   does the attribute also have the given value?
+     * @param {String} key - attribute name
+     * @param {*} [withValue=null] - value to test for
+     * @returns {Boolean}
+     */
     hasAttribute: function (key, withValue = null) {
         const hasAttribute = this.attributes.hasOwnProperty(key);
         if (!hasAttribute || withValue === null) {
@@ -416,6 +599,14 @@ const leafPrototype = {
         return this.attributes[key] === withValue;
     },
 
+    /**
+     * Does any child of this instance have the given attribute? If withValue
+     *   is supplied, does the attribute also have the given value?
+     * @param {Boolean} deep - check the children of each child, recursively
+     * @param {String} key - attribute name
+     * @param {*} [withValue=null] - value to test for
+     * @returns {Boolean}
+     */
     anyChildHasAttribute: function (deep, key, withValue = null) {
         const generator = this.traverse(deep);
         let result = generator.next();
@@ -433,6 +624,10 @@ const leafPrototype = {
     // utility methods
     //
 
+    /**
+     * Update the internal positions of all child leafs.
+     * @private
+     */
     _updatePositions: function () {
         const maxPosition = this.length() - 1;
         const generator = this.traverse();
@@ -447,14 +642,27 @@ const leafPrototype = {
         }
     },
 
+    /**
+     * Does this instance equal (identity) another reference?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
     equals: function (leaf) {
         return leaf === this;
     },
 
+    /**
+     * How many child leafs does this instance have?
+     * @returns {Number}
+     */
     length: function () {
         return this.leafCount;
     },
 
+    /**
+     * Serialize this instance as a string.
+     * @returns {String}
+     */
     toString: function () {
         const { id, label, level, position } = this;
         return `[${id} ${label} - ${level}:${position}]`;
@@ -462,15 +670,85 @@ const leafPrototype = {
 };
 
 /**
- * A leaf node that may or may not also be a tree
+ * Creates a Leaf instance.
  * @param {String} label
  * @param {Boolean} [isExpanded=false]
- * @param {Boolean} isActive
+ * @param {Boolean} [isActive=true]
  * @return {Leaf}
  * @constructor
  */
 Leaf = function (label = '', isExpanded = false, isActive = true) {
-    /** @type {Leaf} **/
+    /**
+     * @typedef {Object} Leaf
+     * @augments {leafPrototype}
+     * @property {Number} id - unique, internal identifier
+     * @property {Leaf|null} parent
+     * @property {Array.<Leaf>} leafs
+     * @property {Number} leafCount
+     * @property {String} label
+     * @property {Number} level
+     * @property {Number} position
+     * @property {Boolean} isRoot
+     * @property {Boolean} isFirstSibling
+     * @property {Boolean} isLastSibling
+     * @property {Boolean} isExpanded
+     * @property {Boolean} isBeingRenamed
+     * @property {Boolean} isBeingGrafted
+     * @property {Boolean} isActive
+     * @property {Object} attributes
+     * @method {Function} moveBefore
+     * @method {Function} moveAfter
+     * @method {Function} makeParentOf
+     * @method {Function} makeChildOf
+     * @method {Function} remove
+     * @method {Function} move
+     * @method {Function} branch
+     * @method {Function} graft
+     * @method {Function} ungraft
+     * @method {Function} inosculate
+     * @method {Function} activate
+     * @method {Function} deactivate
+     * @method {Function} getParent
+     * @method {Function} hasChildren
+     * @method {Function} hasAnyActiveChildren
+     * @method {Function} hasAnyInactiveChildren
+     * @method {Function} getChildren
+     * @method {Function} getFirstChild
+     * @method {Function} getLastChild
+     * @method {Function} getSiblings
+     * @method {Function} getSiblingsBefore
+     * @method {Function} getSiblingsAfter
+     * @method {Function} get
+     * @method {Function} traverse
+     * @method {Function} find
+     * @method {Function} findByAttributes
+     * @method {Function} isParentOf
+     * @method {Function} isChildOf
+     * @method {Function} isAncestorOf
+     * @method {Function} isDescendantOf
+     * @method {Function} isSibling
+     * @method {Function} isBefore
+     * @method {Function} isAfter
+     * @method {Function} isLeftOf
+     * @method {Function} isRightOf
+     * @method {Function} expand
+     * @method {Function} expandChildren
+     * @method {Function} collapse
+     * @method {Function} collapseChildren
+     * @method {Function} toggle
+     * @method {Function} requestLabelChange
+     * @method {Function} cancelLabelChange
+     * @method {Function} commitLabelChange
+     * @method {Function} setAttributes
+     * @method {Function} setAttribute
+     * @method {Function} mergeAttributes
+     * @method {Function} hasAttribute
+     * @method {Function} anyChildHasAttribute
+     * @method {Function} equals
+     * @method {Function} length
+     * @method {Function} toString
+     *
+     */
     const instance = Object.create(leafPrototype);
     /** @type {Leaf} parent node */
     instance.parent = null;
@@ -507,4 +785,8 @@ Leaf = function (label = '', isExpanded = false, isActive = true) {
 
 leafPrototype.constructor = Leaf;
 
+/**
+ * Internal instance count. Used to determine new Leaf IDs.
+ * @type {Number}
+ */
 Leaf.instanceCount = 0;
