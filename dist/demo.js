@@ -5441,6 +5441,8 @@ Groot.wireTap = function (groot) {
     });
 };
 
+window.Groot = Groot;
+
 /***/ }),
 /* 123 */
 /***/ (function(module, exports, __webpack_require__) {

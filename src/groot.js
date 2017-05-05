@@ -1304,3 +1304,5 @@ Groot.wireTap = function (groot, events = EVENTS) {
         });
     });
 };
+
+window.Groot = Groot;
