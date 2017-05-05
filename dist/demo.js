@@ -5262,9 +5262,9 @@ var grootPrototype = {
 
 
         var ACTIVATE_ARGS = {
+            deep: true,
             source: Object.assign({
-                grootID: sourceID,
-                deep: true
+                grootID: sourceID
             }, sourceLeaf.attributes)
         };
 
@@ -5307,9 +5307,9 @@ var grootPrototype = {
 
 
         var DISABLE_ARGS = {
+            deep: true,
             source: Object.assign({
-                grootID: sourceID,
-                deep: true
+                grootID: sourceID
             }, sourceLeaf.attributes)
         };
 
