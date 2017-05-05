@@ -5,10 +5,11 @@ A UI tree for working with nested content.
 <!-- TOC -->
 
 - [Groot](#groot)
+    - [Installation](#installation)
+        - [As an ES2015 module](#as-an-es2015-module)
+        - [As an ES5 script](#as-an-es5-script)
+    - [Building the project](#building-the-project)
     - [Usage](#usage)
-        - [Installation](#installation)
-            - [As an ES2015 module](#as-an-es2015-module)
-            - [As an ES5 script](#as-an-es5-script)
         - [Creating your tree](#creating-your-tree)
         - [Adding custom meta-data](#adding-custom-meta-data)
         - [Listening for events](#listening-for-events)
@@ -21,11 +22,9 @@ A UI tree for working with nested content.
 
 ![Groot menu with TV show information](groot-vanity-shot.png)
 
-## Usage
+## Installation
 
-### Installation
-
-#### As an ES2015 module
+### As an ES2015 module
 
 Install Groot with npm.
 
@@ -39,7 +38,7 @@ Import the `Groot` constructor into your own module.
 import { Groot } from 'groot';
 ```
 
-#### As an ES5 script
+### As an ES5 script
 
 Copy the Groot assets in the `dist/` folder to the appropriate vendor location in your project structure, e.g., `scripts/vendor/groot/`.
 
@@ -55,6 +54,25 @@ Reference the Groot assets in your HTML document.
     <script>console.log(window.Groot);</script>
 </body>
 ```
+
+## Building the project
+
+Install the Groot npm dependencies to ensure that the build tools are present.
+
+```
+$ npm install
+```
+
+The Groot distribution artifacts are pre-built and are located in the `dist/` folder. These assets are re-built with the command:
+
+```
+$ npm run-script build
+```
+
+**The build script relies on bash shell commands and will not work correctly in non-bash environments.**
+
+
+## Usage
 
 ### Creating your tree
 
