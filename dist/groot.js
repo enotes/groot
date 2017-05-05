@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 331);
+/******/ 	return __webpack_require__(__webpack_require__.s = 332);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -4083,6 +4083,1115 @@ define(String.prototype, "padRight", "".padEnd);
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+/*eslint no-plusplus: "off"*/
+/*eslint no-empty: "off"*/
+// @see: https://developer.mozilla.org/en-US/docs/Web/API/Element/matches
+
+
+if (!Element.prototype.matches) {
+    Element.prototype.matches = Element.prototype.matchesSelector || Element.prototype.mozMatchesSelector || Element.prototype.msMatchesSelector || Element.prototype.oMatchesSelector || Element.prototype.webkitMatchesSelector || function (s) {
+        var matches = (this.document || this.ownerDocument).querySelectorAll(s),
+            i = matches.length;
+        while (--i >= 0 && matches.item(i) !== this) {}
+        return i > -1;
+    };
+}
+
+/***/ }),
+/* 123 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+var Emitter = __webpack_require__(119);
+
+//
+// Vanilla event args
+//
+
+var eventArgsPrototype = {
+    isAsync: false
+};
+
+/**
+ * Creates an instance of EventArgs
+ * @param {Object} [properties] - additional properties to append to
+ *   the EventArgs object
+ * @returns {EventArgs}
+ * @constructor
+ */
+var EventArgs = exports.EventArgs = function EventArgs(properties) {
+    /**
+     * @typedef {Object} EventArgs
+     * @augments {eventArgsPrototype}
+     * @property {Boolean} isAsync=false
+     */
+    return Object.assign(Object.create(eventArgsPrototype), properties);
+};
+
+eventArgsPrototype.constructor = EventArgs;
+
+//
+// "Async" event args
+//
+
+var ASYNC_EVENTS = {
+    CANCELLED: 'cancelled',
+    COMMITTED: 'committed'
+};
+
+var asyncEventArgsPrototype = {
+    isAsync: true,
+
+    /**
+     * Cancel this async event
+     */
+    cancel: function cancel() {
+        if (this.isComitted) {
+            return;
+        }
+        this.isCancelled = true;
+        this.emit(ASYNC_EVENTS.CANCELLED);
+    },
+
+    /**
+     * Commit this async event
+     * @param {Object} [result] - result meta-data to be merged into
+     *   a leaf's attributes on commit
+     */
+    commit: function commit() {
+        var result = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+        if (this.isCancelled) {
+            return;
+        }
+        this.isComitted = true;
+        this.result = result;
+        this.emit(ASYNC_EVENTS.COMMITTED);
+    }
+};
+
+/**
+ * Creates an instance of AsyncEventArgs
+ * @param {Object} [properties] - additional properties to append to
+ *   the AsyncEventArgs object
+ * @returns {AsyncEventArgs}
+ * @constructor
+ */
+var AsyncEventArgs = exports.AsyncEventArgs = function AsyncEventArgs(properties) {
+    /**
+     * @typedef {Object} AsyncEventArgs
+     * @augments {EventEmitter3}
+     * @augments {asyncEventArgsPrototype}
+     * @property {Boolean} isAsync=true
+     * @property {Boolean} isCommitted
+     * @property {Boolean} isCancelled
+     * @property {Object} result - result meta-data to be merged into
+     *   a leaf's attributes on commit
+     * @method {Function} commit
+     * @method {Function} cancel
+     * @method {Function} on
+     * @method {Function} emit
+     */
+    var instance = Object.assign(new Emitter(), asyncEventArgsPrototype, properties);
+    instance.isCommitted = false;
+    instance.isCancelled = false;
+    instance.result = {};
+    return instance;
+};
+
+asyncEventArgsPrototype.constructor = AsyncEventArgs;
+
+/**
+ * Events raised by AsyncEventArgs
+ * @type {{CANCELLED: string, COMMITTED: string}}
+ */
+AsyncEventArgs.EVENTS = ASYNC_EVENTS;
+
+/***/ }),
+/* 124 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+//
+// Leaf
+//
+
+// defining here before use to satisfy eslint
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+var _Leaf = void 0;
+
+exports.Leaf = _Leaf;
+var leafPrototype = {
+
+    //
+    // modifying this leaf's relationship to other leafs
+    //
+
+    /**
+     * Move this instance before leaf.
+     * @param {Leaf} leaf
+     */
+    moveBefore: function moveBefore(leaf) {
+        leaf.getParent().move(this, leaf.position);
+    },
+
+    /**
+     * Move this instance after leaf.
+     * @param {Leaf} leaf
+     */
+    moveAfter: function moveAfter(leaf) {
+        leaf.getParent().move(this, leaf.position + 1);
+    },
+
+    /**
+     * Make this instance a parent of leaf.
+     * @param {Leaf} leaf
+     * @returns {Leaf} - leaf
+     */
+    makeParentOf: function makeParentOf(leaf) {
+        var oldParent = leaf.getParent();
+        if (oldParent) {
+            oldParent.remove(leaf);
+        }
+        this.leafs.push(leaf);
+        leaf.parent = this;
+        this.leafCount += 1;
+        leaf.level = this.level + 1;
+        leaf.isRoot = false;
+        this._updatePositions();
+        return leaf;
+    },
+
+    /**
+     * Make this instance a child of leaf.
+     * @param {Leaf} leaf
+     * @returns {Leaf} - leaf
+     */
+    makeChildOf: function makeChildOf(leaf) {
+        return leaf.makeParentOf(this);
+    },
+
+    /**
+     * Remove leaf from this instance's child leafs.
+     * @param {Leaf} leaf
+     * @returns {Leaf} leaf
+     */
+    remove: function remove(leaf) {
+        if (!this.isParentOf(leaf)) {
+            throw new Error('leaf ' + leaf.id + ' is not child of node ' + this.id);
+        }
+        this.leafs.splice(leaf.position, 1);
+        this.leafCount -= 1;
+        leaf.isRoot = true;
+        this._updatePositions();
+        return leaf;
+    },
+
+    /**
+     * Move leaf to position within this instance's child leafs.
+     * @param {Leaf} leaf
+     * @param {Number} position
+     * @returns {Leaf} leaf
+     */
+    move: function move(leaf, position) {
+        if (!leaf.getParent().equals(this)) {
+            this.makeParentOf(leaf);
+        }
+        // if inserting *before* the leaf's position, it will
+        // bump the remove position by 1
+        var removePosition = position <= leaf.position ? leaf.position + 1 : leaf.position;
+        // console.log(`moving ${leaf.position} => ${position}`);
+        this.leafs.splice(position, 0, leaf);
+        // console.log(`removing ${removePosition}`);
+        this.leafs.splice(removePosition, 1);
+        this._updatePositions();
+        return leaf;
+    },
+
+    /**
+     * Branch this leaf by creating a new leaf and making this leaf
+     *   its parent
+     * @param {String} [label]
+     * @return {Leaf}
+     */
+    branch: function branch() {
+        var label = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+
+        var leaf = new _Leaf(label);
+        this.makeParentOf(leaf);
+        return leaf;
+    },
+
+    /**
+     * Create a graft on this leaf by creating a new leaf and
+     *   making this leaf its parent. A grafted leaf differs from
+     *   a branched leaf in that a grafted leaf tracks its grafting
+     *   status and may ungraft (remove itself) or inosculate (commit
+     *   itself) to its parent. A grafted leaf has no label.
+     * @return {Leaf}
+     */
+    graft: function graft() {
+        var leaf = this.branch();
+        leaf.isBeingGrafted = true;
+        return leaf;
+    },
+
+    /**
+     * Ungraft this leaf by removing it from its parent.
+     * @return {Boolean}
+     */
+    ungraft: function ungraft() {
+        if (!this.isBeingGrafted) {
+            return false;
+        }
+        this.getParent().remove(this);
+        return true;
+    },
+
+    /**
+     * Inosculate this leaf (commit it) to its parent and stop
+     *   tracking its grafting status.
+     * @return {Boolean}
+     */
+    inosculate: function inosculate() {
+        if (!this.isBeingGrafted) {
+            return false;
+        }
+        this.isBeingGrafted = false;
+        return true;
+    },
+
+    /**
+     * Activate this instance.
+     */
+    activate: function activate() {
+        this.isActive = true;
+    },
+
+    /**
+     * Deactivate this instance.
+     */
+    deactivate: function deactivate() {
+        this.isActive = false;
+    },
+
+    //
+    // getting leafs related to this leaf
+    //
+
+    /**
+     * Get the parent of this instance.
+     * @returns {Leaf|null}
+     */
+    getParent: function getParent() {
+        return this.parent;
+    },
+
+    /**
+     * Does this instance have any children?
+     * @returns {Boolean}
+     */
+    hasChildren: function hasChildren() {
+        return this.length() > 0;
+    },
+
+    /**
+     * Does this instance have any active children?
+     * @param {Boolean} [deep=false] - consider children of children, etc.
+     * @returns {Boolean}
+     */
+    hasAnyActiveChildren: function hasAnyActiveChildren() {
+        var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+        var generator = this.traverse(deep);
+        var result = generator.next();
+        while (!result.done) {
+            var leaf = result.value;
+            if (leaf.isActive) {
+                return true;
+            }
+            result = generator.next();
+        }
+        return false;
+    },
+
+    /**
+     * Does this instance have any inactive children?
+     * @param {Boolean} [deep=true] - consider children of children, etc.
+     * @returns {Boolean}
+     */
+    hasAnyInactiveChildren: function hasAnyInactiveChildren() {
+        var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+        var generator = this.traverse(deep);
+        var result = generator.next();
+        while (!result.done) {
+            var leaf = result.value;
+            if (!leaf.isActive) {
+                return true;
+            }
+            result = generator.next();
+        }
+        return false;
+    },
+
+    /**
+     * Get this instance's children.
+     * @returns {Array.<Leaf>}
+     */
+    getChildren: function getChildren() {
+        return this.leafs;
+    },
+
+    /**
+     * Get the first child in this instance.
+     * @returns {Leaf|null}
+     */
+    getFirstChild: function getFirstChild() {
+        if (this.length() === 0) {
+            return null;
+        }
+        return this.leafs[0];
+    },
+
+    /**
+     * Get the last child in this instance.
+     * @returns {Leaf|null}
+     */
+    getLastChild: function getLastChild() {
+        if (this.length() === 0) {
+            return null;
+        }
+        return this.leafs[this.length() - 1];
+    },
+
+    /**
+     * Get the siblings of this instance.
+     * @returns {Array.<Leaf>}
+     */
+    getSiblings: function getSiblings() {
+        var siblings = this.getParent().getChildren()
+        // shallow copy
+        .map(function (s) {
+            return s;
+        });
+        siblings.splice(this.position, 1);
+        return siblings;
+    },
+
+    /**
+     * Get the siblings before this instance.
+     * @returns {Array.<Leaf>|null}
+     */
+    getSiblingBefore: function getSiblingBefore() {
+        if (this.isRoot) {
+            return null;
+        }
+        if (this.isFirstSibling) {
+            return null;
+        }
+        return this.getParent().get(this.position - 1);
+    },
+
+    /**
+     * Get the siblings after this instance.
+     * @returns {Array.<Leaf>|null}
+     */
+    getSiblingAfter: function getSiblingAfter() {
+        if (this.isRoot) {
+            return null;
+        }
+        if (this.isLastSibling) {
+            return null;
+        }
+        return this.getParent().get(this.position + 1);
+    },
+
+    /**
+     * Get a child leaf of this instance by position.
+     * @param {Number} position
+     * @returns {Leaf|null}
+     */
+    get: function get(position) {
+        return this.leafs[position];
+    },
+
+    /**
+     * Create a generator to traverse this instance's child leafs.
+     * @param {Boolean} [deep=false] - traverse children of children, etc.
+     * @return {Generator}
+     */
+    traverse: regeneratorRuntime.mark(function traverse() {
+        var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+        var i, leaf, generator, result, childLeaf;
+        return regeneratorRuntime.wrap(function traverse$(_context) {
+            while (1) {
+                switch (_context.prev = _context.next) {
+                    case 0:
+                        i = 0;
+
+                    case 1:
+                        if (!(i < this.length())) {
+                            _context.next = 19;
+                            break;
+                        }
+
+                        leaf = this.get(i);
+                        // console.info(`> ${leaf.id}`);
+
+                        _context.next = 5;
+                        return leaf;
+
+                    case 5:
+                        if (!(!deep || leaf.length() === 0)) {
+                            _context.next = 7;
+                            break;
+                        }
+
+                        return _context.abrupt('continue', 16);
+
+                    case 7:
+                        generator = leaf.traverse(true);
+                        result = generator.next();
+
+                    case 9:
+                        if (result.done) {
+                            _context.next = 16;
+                            break;
+                        }
+
+                        childLeaf = result.value;
+                        // console.info(`> ${childLeaf.id}`);
+
+                        _context.next = 13;
+                        return childLeaf;
+
+                    case 13:
+                        result = generator.next();
+                        _context.next = 9;
+                        break;
+
+                    case 16:
+                        i += 1;
+                        _context.next = 1;
+                        break;
+
+                    case 19:
+                    case 'end':
+                        return _context.stop();
+                }
+            }
+        }, traverse, this);
+    }),
+
+    /**
+     * Find a leaf by groot ID
+     * @param {Number} id
+     * @param {Boolean} [throwOnMissing=true] - if no leaf is found, throw an error
+     * @return {Leaf|null}
+     */
+    find: function find(id) {
+        var throwOnMissing = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+        if (id === this.id) {
+            return this;
+        }
+        var generator = this.traverse(true);
+        var result = generator.next();
+        while (!result.done) {
+            var leaf = result.value;
+            if (leaf.id === id) {
+                return leaf;
+            }
+            result = generator.next();
+        }
+        if (throwOnMissing) {
+            throw new Error('no leaf with id ' + id + ' exists');
+        }
+        return null;
+    },
+
+    /**
+     * Find a leaf by matching its custom attributes.
+     * @param {Object} attributes
+     * @param {Boolean} [throwOnMissing=true] - if no leaf is found, throw an error
+     * @return {Leaf|null}
+     */
+    findByAttributes: function findByAttributes() {
+        var attributes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+        var throwOnMissing = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+        var generator = this.traverse(true);
+        var result = generator.next();
+        while (!result.done) {
+            var leaf = result.value;
+            var isMatch = true;
+            var keys = Object.keys(attributes);
+            while (keys.length) {
+                var key = keys.shift();
+                isMatch = isMatch && leaf.attributes[key] === attributes[key];
+            }
+            if (isMatch) {
+                return leaf;
+            }
+            result = generator.next();
+        }
+        if (throwOnMissing) {
+            attributes = JSON.stringify(attributes);
+            throw new Error('no leaf exists for attributes: ' + attributes);
+        }
+        return null;
+    },
+
+    //
+    // querying this leaf's relationship to other leafs
+    //
+
+    /**
+     * Is this instance the parent of leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
+    isParentOf: function isParentOf(leaf) {
+        return leaf.getParent().equals(this);
+    },
+
+    /**
+     * Is this instance a child of leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
+    isChildOf: function isChildOf(leaf) {
+        return this.getParent().equals(leaf);
+    },
+
+    /**
+     * Is this instance an ancestor of leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
+    isAncestorOf: function isAncestorOf(leaf) {
+        return leaf.isDescendantOf(this);
+    },
+
+    /**
+     * Is this instance a descendant of leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
+    isDescendantOf: function isDescendantOf(leaf) {
+        var parent = this.getParent();
+        while (parent) {
+            if (parent === leaf) {
+                return true;
+            }
+            parent = parent.getParent();
+        }
+        return false;
+    },
+
+    /**
+     * Is this instance a sibling of leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
+    isSibling: function isSibling(leaf) {
+        return this.getParent() === leaf.getParent();
+    },
+
+    /**
+     * Is this instance before leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
+    isBefore: function isBefore(leaf) {
+        return this.isSibling(leaf) && leaf.position > this.position;
+    },
+
+    /**
+     * Is this instance after leaf?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
+    isAfter: function isAfter(leaf) {
+        return this.isSibling(leaf) && leaf.position < this.position;
+    },
+
+    /**
+     * Is this instance "left of" leaf (i.e., has a lower level)?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
+    isLeftOf: function isLeftOf(leaf) {
+        return leaf.level > this.level;
+    },
+
+    /**
+     * Is this instance "right of" leaf (i.e., has a higher level)?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
+    isRightOf: function isRightOf(leaf) {
+        return leaf.level < this.level;
+    },
+
+    //
+    // how this leaf represents itself
+    //
+
+    /**
+     * Expand this leaf.
+     * @param {Boolean} [deep=false] - expand the children of this leaf, recursively
+     */
+    expand: function expand() {
+        var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+        if (deep) {
+            this.expandChildren(deep);
+        }
+        this.isExpanded = true;
+    },
+
+    /**
+     * Expand the children of this leaf.
+     * @param {Boolean} [deep=false] - expand the children of each child, recursively
+     */
+    expandChildren: function expandChildren() {
+        var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+        var generator = this.traverse(deep);
+        var result = generator.next();
+        while (!result.done) {
+            var leaf = result.value;
+            leaf.isExpanded = true;
+            leaf.collapse();
+            result = generator.next();
+        }
+    },
+
+    /**
+     * Collapse this leaf.
+     * @param {Boolean} [deep=false] - collapse the children of this leaf, recursively
+     */
+    collapse: function collapse() {
+        var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+        if (deep) {
+            this.collapseChildren(deep);
+        }
+        this.isExpanded = false;
+    },
+
+    /**
+     * Collapse the children of this leaf.
+     * @param {Boolean} [deep=false] - collapse the children of each child, recursively
+     */
+    collapseChildren: function collapseChildren() {
+        var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+        var generator = this.traverse(deep);
+        var result = generator.next();
+        while (!result.done) {
+            var leaf = result.value;
+            leaf.isExpanded = false;
+            result = generator.next();
+        }
+    },
+
+    /**
+     * Toggle (expand/collapse) this instance.
+     * @returns {*}
+     */
+    toggle: function toggle() {
+        return this.isExpanded ? this.collapse() : this.expand();
+    },
+
+    /**
+     * Mark this leaf as being renamed.
+     */
+    requestLabelChange: function requestLabelChange() {
+        this.isBeingRenamed = true;
+    },
+
+    /**
+     * Unmark this leaf as being renamed.
+     */
+    cancelLabelChange: function cancelLabelChange() {
+        this.isBeingRenamed = false;
+    },
+
+    /**
+     * Apply a label change to this leaf.
+     * @param {String} label
+     */
+    commitLabelChange: function commitLabelChange(label) {
+        this.label = label;
+        this.isBeingRenamed = false;
+    },
+
+    /**
+     * Set (override) the custom attributes of this leaf.
+     * @param {Object} [attributes={}]
+     */
+    setAttributes: function setAttributes() {
+        var attributes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+        this.attributes = attributes;
+    },
+
+    /**
+     * Set a custom attribute for this leaf.
+     * @param {String} key
+     * @param {*} value
+     */
+    setAttribute: function setAttribute(key, value) {
+        this.attributes[key] = value;
+    },
+
+    /**
+     * Merge the attributes of this leaf with attributes.
+     * @param {Object} [attributes={}]
+     */
+    mergeAttributes: function mergeAttributes() {
+        var attributes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+        this.attributes = Object.assign(this.attributes, attributes);
+    },
+
+    /**
+     * Does this leaf have a given attribute? If withValue is supplied,
+     *   does the attribute also have the given value?
+     * @param {String} key - attribute name
+     * @param {*} [withValue=null] - value to test for
+     * @returns {Boolean}
+     */
+    hasAttribute: function hasAttribute(key) {
+        var withValue = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
+        var hasAttribute = this.attributes.hasOwnProperty(key);
+        if (!hasAttribute || withValue === null) {
+            return hasAttribute;
+        }
+        return this.attributes[key] === withValue;
+    },
+
+    /**
+     * Does any child of this instance have the given attribute? If withValue
+     *   is supplied, does the attribute also have the given value?
+     * @param {Boolean} deep - check the children of each child, recursively
+     * @param {String} key - attribute name
+     * @param {*} [withValue=null] - value to test for
+     * @returns {Boolean}
+     */
+    anyChildHasAttribute: function anyChildHasAttribute(deep, key) {
+        var withValue = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+
+        var generator = this.traverse(deep);
+        var result = generator.next();
+        while (!result.done) {
+            var leaf = result.value;
+            if (leaf.hasAttribute(key, withValue)) {
+                return true;
+            }
+            result = generator.next();
+        }
+        return false;
+    },
+
+    //
+    // utility methods
+    //
+
+    /**
+     * Update the internal positions of all child leafs.
+     * @private
+     */
+    _updatePositions: function _updatePositions() {
+        var maxPosition = this.length() - 1;
+        var generator = this.traverse();
+        var result = generator.next();
+        var position = -1;
+        while (!result.done) {
+            var leaf = result.value;
+            leaf.position = position += 1;
+            leaf.isFirstSibling = leaf.position === 0;
+            leaf.isLastSibling = leaf.position === maxPosition;
+            result = generator.next();
+        }
+    },
+
+    /**
+     * Does this instance equal (identity) another reference?
+     * @param {Leaf} leaf
+     * @returns {Boolean}
+     */
+    equals: function equals(leaf) {
+        return leaf === this;
+    },
+
+    /**
+     * How many child leafs does this instance have?
+     * @returns {Number}
+     */
+    length: function length() {
+        return this.leafCount;
+    },
+
+    /**
+     * Serialize this instance as a string.
+     * @returns {String}
+     */
+    toString: function toString() {
+        var id = this.id,
+            label = this.label,
+            level = this.level,
+            position = this.position;
+
+        return '[' + id + ' ' + label + ' - ' + level + ':' + position + ']';
+    }
+};
+
+/**
+ * Creates a Leaf instance.
+ * @param {String} label
+ * @param {Boolean} [isExpanded=false]
+ * @param {Boolean} [isActive=true]
+ * @return {Leaf}
+ * @constructor
+ */
+exports.Leaf = _Leaf = function Leaf() {
+    var label = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+    var isExpanded = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+    var isActive = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+    /**
+     * @typedef {Object} Leaf
+     * @augments {leafPrototype}
+     * @property {Number} id - unique, internal identifier
+     * @property {Leaf|null} parent
+     * @property {Array.<Leaf>} leafs
+     * @property {Number} leafCount
+     * @property {String} label
+     * @property {Number} level
+     * @property {Number} position
+     * @property {Boolean} isRoot
+     * @property {Boolean} isFirstSibling
+     * @property {Boolean} isLastSibling
+     * @property {Boolean} isExpanded
+     * @property {Boolean} isBeingRenamed
+     * @property {Boolean} isBeingGrafted
+     * @property {Boolean} isActive
+     * @property {Object} attributes
+     * @method {Function} moveBefore
+     * @method {Function} moveAfter
+     * @method {Function} makeParentOf
+     * @method {Function} makeChildOf
+     * @method {Function} remove
+     * @method {Function} move
+     * @method {Function} branch
+     * @method {Function} graft
+     * @method {Function} ungraft
+     * @method {Function} inosculate
+     * @method {Function} activate
+     * @method {Function} deactivate
+     * @method {Function} getParent
+     * @method {Function} hasChildren
+     * @method {Function} hasAnyActiveChildren
+     * @method {Function} hasAnyInactiveChildren
+     * @method {Function} getChildren
+     * @method {Function} getFirstChild
+     * @method {Function} getLastChild
+     * @method {Function} getSiblings
+     * @method {Function} getSiblingsBefore
+     * @method {Function} getSiblingsAfter
+     * @method {Function} get
+     * @method {Function} traverse
+     * @method {Function} find
+     * @method {Function} findByAttributes
+     * @method {Function} isParentOf
+     * @method {Function} isChildOf
+     * @method {Function} isAncestorOf
+     * @method {Function} isDescendantOf
+     * @method {Function} isSibling
+     * @method {Function} isBefore
+     * @method {Function} isAfter
+     * @method {Function} isLeftOf
+     * @method {Function} isRightOf
+     * @method {Function} expand
+     * @method {Function} expandChildren
+     * @method {Function} collapse
+     * @method {Function} collapseChildren
+     * @method {Function} toggle
+     * @method {Function} requestLabelChange
+     * @method {Function} cancelLabelChange
+     * @method {Function} commitLabelChange
+     * @method {Function} setAttributes
+     * @method {Function} setAttribute
+     * @method {Function} mergeAttributes
+     * @method {Function} hasAttribute
+     * @method {Function} anyChildHasAttribute
+     * @method {Function} equals
+     * @method {Function} length
+     * @method {Function} toString
+     *
+     */
+    var instance = Object.create(leafPrototype);
+    /** @type {Leaf} parent node */
+    instance.parent = null;
+    /** @type {Array.<Leaf>} child nodes */
+    instance.leafs = [];
+    /** @type {Number} number of child nodes */
+    instance.leafCount = 0;
+    /** @type {String} label */
+    instance.label = label;
+    /** @type {Number} indentation level */
+    instance.level = 0;
+    /** @type {Number} position as a child; 0-based */
+    instance.position = 0;
+    /** @type {Boolean} is this a parentless node? */
+    instance.isRoot = true;
+    /** @type {Boolean} is this node the first among siblings? */
+    instance.isFirstSibling = true;
+    /** @type {Boolean} is this node the last among siblings? */
+    instance.isLastSibling = true;
+    /** @type {Boolean} is this node expanded? */
+    instance.isExpanded = isExpanded;
+    /** @type {Boolean} is this node being renamed? */
+    instance.isBeingRenamed = false;
+    /** @type {Boolean} is this leaf being grafted into another? */
+    instance.isBeingGrafted = false;
+    /** @type {Boolean} generic "active" flag **/
+    instance.isActive = isActive;
+    /** @type {Boolean} attributes to be rendered as data-<key> in the DOM */
+    instance.attributes = {};
+    /** @type {Number} unique identifier */
+    instance.id = _Leaf.instanceCount += 1;
+    return instance;
+};
+
+leafPrototype.constructor = _Leaf;
+
+/**
+ * Internal instance count. Used to determine new Leaf IDs.
+ * @type {Number}
+ */
+_Leaf.instanceCount = 0;
+
+/***/ }),
+/* 125 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.GrootMenu = undefined;
+
+var _noid = __webpack_require__(127);
+
+var _grootTemplates = __webpack_require__(90);
+
+//
+// GrootMenu
+//
+
+var GrootMenu = exports.GrootMenu = void 0;
+
+var grootMenuPrototype = {
+    show: function show(listItemElement) {
+        var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : GrootMenu.defaultOptions;
+
+        this.listItemElement = listItemElement || this.listItemElement;
+        if (!listItemElement) {
+            throw new Error('no list item provided');
+        }
+        options = options || this.options;
+        this.options = options;
+        var tempElement = document.createElement('div');
+        tempElement.innerHTML = (0, _grootTemplates.menuTemplate)(this.options);
+        var menuElement = this.menuElement = tempElement.firstElementChild;
+        listItemElement.insertBefore(menuElement, listItemElement.firstElementChild);
+        this.isShowing = true;
+    },
+
+    hide: function hide() {
+        if (!this.isShowing) {
+            return;
+        }
+        this.listItemElement.removeChild(this.menuElement);
+        this.isShowing = false;
+    }
+};
+
+exports.GrootMenu = GrootMenu = function GrootMenu() {
+    var instance = Object.create(grootMenuPrototype);
+    instance.isShowing = false;
+    instance.menuElement = null;
+    instance.listItemElement = null;
+    instance.options = null;
+    return instance;
+};
+
+/**
+ * Given a set of potential options, will the menu actually
+ *   show anything meaningful, i.e., are all options set to
+ *   "off", or are there options that will be displayed?
+ * @param {GrootOptions} options
+ * @return {Boolean}
+ */
+GrootMenu.willShow = function (options) {
+    var ignoredOptions = ['sourceID', 'targetID'];
+    var optionKeys = Object.keys(options).filter(function (optionKey) {
+        return ignoredOptions.indexOf(optionKey) < 0;
+    });
+    return optionKeys.reduce(function (accumulator, optionKey) {
+        return accumulator || options[optionKey];
+    }, false);
+};
+
+/**
+ * @typedef {Object} GrootOptions
+ */
+GrootMenu.defaultOptions = Object.seal({
+    sourceID: (0, _noid.noid)(),
+    targetID: (0, _noid.noid)(),
+    create: true,
+    rename: true,
+    'delete': true,
+    moveTo: true,
+    moveUp: true,
+    moveDown: true,
+    moveFirst: true,
+    moveLast: true,
+    moveBefore: false,
+    moveAfter: false,
+    makeParent: false,
+    activateChildren: false,
+    disableChildren: false
+});
+
+GrootMenu.createOptions = function (overrides) {
+    return Object.assign({}, GrootMenu.defaultOptions, overrides);
+};
+
+grootMenuPrototype.constructor = GrootMenu;
+
+/***/ }),
+/* 126 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
 
 
 Object.defineProperty(exports, "__esModule", {
@@ -4094,18 +5203,18 @@ var _keycodeJs = __webpack_require__(326);
 
 var _keycodeJs2 = _interopRequireDefault(_keycodeJs);
 
-var _grootLeaf = __webpack_require__(125);
+var _grootLeaf = __webpack_require__(124);
 
-var _grootMenu = __webpack_require__(126);
+var _grootMenu = __webpack_require__(125);
 
 var _grootTemplates = __webpack_require__(90);
 
-var _grootEventArgs = __webpack_require__(124);
+var _grootEventArgs = __webpack_require__(123);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Emitter = __webpack_require__(119);
-__webpack_require__(123);
+__webpack_require__(122);
 
 
 var ENTER_KEYS = [_keycodeJs2.default.KEY_ENTER, _keycodeJs2.default.KEY_RETURN];
@@ -5662,1117 +6771,6 @@ Groot.wireTap = function (groot) {
         });
     });
 };
-
-window.Groot = Groot;
-
-/***/ }),
-/* 123 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/*eslint no-plusplus: "off"*/
-/*eslint no-empty: "off"*/
-// @see: https://developer.mozilla.org/en-US/docs/Web/API/Element/matches
-
-
-if (!Element.prototype.matches) {
-    Element.prototype.matches = Element.prototype.matchesSelector || Element.prototype.mozMatchesSelector || Element.prototype.msMatchesSelector || Element.prototype.oMatchesSelector || Element.prototype.webkitMatchesSelector || function (s) {
-        var matches = (this.document || this.ownerDocument).querySelectorAll(s),
-            i = matches.length;
-        while (--i >= 0 && matches.item(i) !== this) {}
-        return i > -1;
-    };
-}
-
-/***/ }),
-/* 124 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-var Emitter = __webpack_require__(119);
-
-//
-// Vanilla event args
-//
-
-var eventArgsPrototype = {
-    isAsync: false
-};
-
-/**
- * Creates an instance of EventArgs
- * @param {Object} [properties] - additional properties to append to
- *   the EventArgs object
- * @returns {EventArgs}
- * @constructor
- */
-var EventArgs = exports.EventArgs = function EventArgs(properties) {
-    /**
-     * @typedef {Object} EventArgs
-     * @augments {eventArgsPrototype}
-     * @property {Boolean} isAsync=false
-     */
-    return Object.assign(Object.create(eventArgsPrototype), properties);
-};
-
-eventArgsPrototype.constructor = EventArgs;
-
-//
-// "Async" event args
-//
-
-var ASYNC_EVENTS = {
-    CANCELLED: 'cancelled',
-    COMMITTED: 'committed'
-};
-
-var asyncEventArgsPrototype = {
-    isAsync: true,
-
-    /**
-     * Cancel this async event
-     */
-    cancel: function cancel() {
-        if (this.isComitted) {
-            return;
-        }
-        this.isCancelled = true;
-        this.emit(ASYNC_EVENTS.CANCELLED);
-    },
-
-    /**
-     * Commit this async event
-     * @param {Object} [result] - result meta-data to be merged into
-     *   a leaf's attributes on commit
-     */
-    commit: function commit() {
-        var result = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-        if (this.isCancelled) {
-            return;
-        }
-        this.isComitted = true;
-        this.result = result;
-        this.emit(ASYNC_EVENTS.COMMITTED);
-    }
-};
-
-/**
- * Creates an instance of AsyncEventArgs
- * @param {Object} [properties] - additional properties to append to
- *   the AsyncEventArgs object
- * @returns {AsyncEventArgs}
- * @constructor
- */
-var AsyncEventArgs = exports.AsyncEventArgs = function AsyncEventArgs(properties) {
-    /**
-     * @typedef {Object} AsyncEventArgs
-     * @augments {EventEmitter3}
-     * @augments {asyncEventArgsPrototype}
-     * @property {Boolean} isAsync=true
-     * @property {Boolean} isCommitted
-     * @property {Boolean} isCancelled
-     * @property {Object} result - result meta-data to be merged into
-     *   a leaf's attributes on commit
-     * @method {Function} commit
-     * @method {Function} cancel
-     * @method {Function} on
-     * @method {Function} emit
-     */
-    var instance = Object.assign(new Emitter(), asyncEventArgsPrototype, properties);
-    instance.isCommitted = false;
-    instance.isCancelled = false;
-    instance.result = {};
-    return instance;
-};
-
-asyncEventArgsPrototype.constructor = AsyncEventArgs;
-
-/**
- * Events raised by AsyncEventArgs
- * @type {{CANCELLED: string, COMMITTED: string}}
- */
-AsyncEventArgs.EVENTS = ASYNC_EVENTS;
-
-/***/ }),
-/* 125 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-//
-// Leaf
-//
-
-// defining here before use to satisfy eslint
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-var _Leaf = void 0;
-
-exports.Leaf = _Leaf;
-var leafPrototype = {
-
-    //
-    // modifying this leaf's relationship to other leafs
-    //
-
-    /**
-     * Move this instance before leaf.
-     * @param {Leaf} leaf
-     */
-    moveBefore: function moveBefore(leaf) {
-        leaf.getParent().move(this, leaf.position);
-    },
-
-    /**
-     * Move this instance after leaf.
-     * @param {Leaf} leaf
-     */
-    moveAfter: function moveAfter(leaf) {
-        leaf.getParent().move(this, leaf.position + 1);
-    },
-
-    /**
-     * Make this instance a parent of leaf.
-     * @param {Leaf} leaf
-     * @returns {Leaf} - leaf
-     */
-    makeParentOf: function makeParentOf(leaf) {
-        var oldParent = leaf.getParent();
-        if (oldParent) {
-            oldParent.remove(leaf);
-        }
-        this.leafs.push(leaf);
-        leaf.parent = this;
-        this.leafCount += 1;
-        leaf.level = this.level + 1;
-        leaf.isRoot = false;
-        this._updatePositions();
-        return leaf;
-    },
-
-    /**
-     * Make this instance a child of leaf.
-     * @param {Leaf} leaf
-     * @returns {Leaf} - leaf
-     */
-    makeChildOf: function makeChildOf(leaf) {
-        return leaf.makeParentOf(this);
-    },
-
-    /**
-     * Remove leaf from this instance's child leafs.
-     * @param {Leaf} leaf
-     * @returns {Leaf} leaf
-     */
-    remove: function remove(leaf) {
-        if (!this.isParentOf(leaf)) {
-            throw new Error('leaf ' + leaf.id + ' is not child of node ' + this.id);
-        }
-        this.leafs.splice(leaf.position, 1);
-        this.leafCount -= 1;
-        leaf.isRoot = true;
-        this._updatePositions();
-        return leaf;
-    },
-
-    /**
-     * Move leaf to position within this instance's child leafs.
-     * @param {Leaf} leaf
-     * @param {Number} position
-     * @returns {Leaf} leaf
-     */
-    move: function move(leaf, position) {
-        if (!leaf.getParent().equals(this)) {
-            this.makeParentOf(leaf);
-        }
-        // if inserting *before* the leaf's position, it will
-        // bump the remove position by 1
-        var removePosition = position <= leaf.position ? leaf.position + 1 : leaf.position;
-        // console.log(`moving ${leaf.position} => ${position}`);
-        this.leafs.splice(position, 0, leaf);
-        // console.log(`removing ${removePosition}`);
-        this.leafs.splice(removePosition, 1);
-        this._updatePositions();
-        return leaf;
-    },
-
-    /**
-     * Branch this leaf by creating a new leaf and making this leaf
-     *   its parent
-     * @param {String} [label]
-     * @return {Leaf}
-     */
-    branch: function branch() {
-        var label = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-
-        var leaf = new _Leaf(label);
-        this.makeParentOf(leaf);
-        return leaf;
-    },
-
-    /**
-     * Create a graft on this leaf by creating a new leaf and
-     *   making this leaf its parent. A grafted leaf differs from
-     *   a branched leaf in that a grafted leaf tracks its grafting
-     *   status and may ungraft (remove itself) or inosculate (commit
-     *   itself) to its parent. A grafted leaf has no label.
-     * @return {Leaf}
-     */
-    graft: function graft() {
-        var leaf = this.branch();
-        leaf.isBeingGrafted = true;
-        return leaf;
-    },
-
-    /**
-     * Ungraft this leaf by removing it from its parent.
-     * @return {Boolean}
-     */
-    ungraft: function ungraft() {
-        if (!this.isBeingGrafted) {
-            return false;
-        }
-        this.getParent().remove(this);
-        return true;
-    },
-
-    /**
-     * Inosculate this leaf (commit it) to its parent and stop
-     *   tracking its grafting status.
-     * @return {Boolean}
-     */
-    inosculate: function inosculate() {
-        if (!this.isBeingGrafted) {
-            return false;
-        }
-        this.isBeingGrafted = false;
-        return true;
-    },
-
-    /**
-     * Activate this instance.
-     */
-    activate: function activate() {
-        this.isActive = true;
-    },
-
-    /**
-     * Deactivate this instance.
-     */
-    deactivate: function deactivate() {
-        this.isActive = false;
-    },
-
-    //
-    // getting leafs related to this leaf
-    //
-
-    /**
-     * Get the parent of this instance.
-     * @returns {Leaf|null}
-     */
-    getParent: function getParent() {
-        return this.parent;
-    },
-
-    /**
-     * Does this instance have any children?
-     * @returns {Boolean}
-     */
-    hasChildren: function hasChildren() {
-        return this.length() > 0;
-    },
-
-    /**
-     * Does this instance have any active children?
-     * @param {Boolean} [deep=false] - consider children of children, etc.
-     * @returns {Boolean}
-     */
-    hasAnyActiveChildren: function hasAnyActiveChildren() {
-        var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-
-        var generator = this.traverse(deep);
-        var result = generator.next();
-        while (!result.done) {
-            var leaf = result.value;
-            if (leaf.isActive) {
-                return true;
-            }
-            result = generator.next();
-        }
-        return false;
-    },
-
-    /**
-     * Does this instance have any inactive children?
-     * @param {Boolean} [deep=true] - consider children of children, etc.
-     * @returns {Boolean}
-     */
-    hasAnyInactiveChildren: function hasAnyInactiveChildren() {
-        var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-
-        var generator = this.traverse(deep);
-        var result = generator.next();
-        while (!result.done) {
-            var leaf = result.value;
-            if (!leaf.isActive) {
-                return true;
-            }
-            result = generator.next();
-        }
-        return false;
-    },
-
-    /**
-     * Get this instance's children.
-     * @returns {Array.<Leaf>}
-     */
-    getChildren: function getChildren() {
-        return this.leafs;
-    },
-
-    /**
-     * Get the first child in this instance.
-     * @returns {Leaf|null}
-     */
-    getFirstChild: function getFirstChild() {
-        if (this.length() === 0) {
-            return null;
-        }
-        return this.leafs[0];
-    },
-
-    /**
-     * Get the last child in this instance.
-     * @returns {Leaf|null}
-     */
-    getLastChild: function getLastChild() {
-        if (this.length() === 0) {
-            return null;
-        }
-        return this.leafs[this.length() - 1];
-    },
-
-    /**
-     * Get the siblings of this instance.
-     * @returns {Array.<Leaf>}
-     */
-    getSiblings: function getSiblings() {
-        var siblings = this.getParent().getChildren()
-        // shallow copy
-        .map(function (s) {
-            return s;
-        });
-        siblings.splice(this.position, 1);
-        return siblings;
-    },
-
-    /**
-     * Get the siblings before this instance.
-     * @returns {Array.<Leaf>|null}
-     */
-    getSiblingBefore: function getSiblingBefore() {
-        if (this.isRoot) {
-            return null;
-        }
-        if (this.isFirstSibling) {
-            return null;
-        }
-        return this.getParent().get(this.position - 1);
-    },
-
-    /**
-     * Get the siblings after this instance.
-     * @returns {Array.<Leaf>|null}
-     */
-    getSiblingAfter: function getSiblingAfter() {
-        if (this.isRoot) {
-            return null;
-        }
-        if (this.isLastSibling) {
-            return null;
-        }
-        return this.getParent().get(this.position + 1);
-    },
-
-    /**
-     * Get a child leaf of this instance by position.
-     * @param {Number} position
-     * @returns {Leaf|null}
-     */
-    get: function get(position) {
-        return this.leafs[position];
-    },
-
-    /**
-     * Create a generator to traverse this instance's child leafs.
-     * @param {Boolean} [deep=false] - traverse children of children, etc.
-     * @return {Generator}
-     */
-    traverse: regeneratorRuntime.mark(function traverse() {
-        var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-        var i, leaf, generator, result, childLeaf;
-        return regeneratorRuntime.wrap(function traverse$(_context) {
-            while (1) {
-                switch (_context.prev = _context.next) {
-                    case 0:
-                        i = 0;
-
-                    case 1:
-                        if (!(i < this.length())) {
-                            _context.next = 19;
-                            break;
-                        }
-
-                        leaf = this.get(i);
-                        // console.info(`> ${leaf.id}`);
-
-                        _context.next = 5;
-                        return leaf;
-
-                    case 5:
-                        if (!(!deep || leaf.length() === 0)) {
-                            _context.next = 7;
-                            break;
-                        }
-
-                        return _context.abrupt('continue', 16);
-
-                    case 7:
-                        generator = leaf.traverse(true);
-                        result = generator.next();
-
-                    case 9:
-                        if (result.done) {
-                            _context.next = 16;
-                            break;
-                        }
-
-                        childLeaf = result.value;
-                        // console.info(`> ${childLeaf.id}`);
-
-                        _context.next = 13;
-                        return childLeaf;
-
-                    case 13:
-                        result = generator.next();
-                        _context.next = 9;
-                        break;
-
-                    case 16:
-                        i += 1;
-                        _context.next = 1;
-                        break;
-
-                    case 19:
-                    case 'end':
-                        return _context.stop();
-                }
-            }
-        }, traverse, this);
-    }),
-
-    /**
-     * Find a leaf by groot ID
-     * @param {Number} id
-     * @param {Boolean} [throwOnMissing=true] - if no leaf is found, throw an error
-     * @return {Leaf|null}
-     */
-    find: function find(id) {
-        var throwOnMissing = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
-
-        if (id === this.id) {
-            return this;
-        }
-        var generator = this.traverse(true);
-        var result = generator.next();
-        while (!result.done) {
-            var leaf = result.value;
-            if (leaf.id === id) {
-                return leaf;
-            }
-            result = generator.next();
-        }
-        if (throwOnMissing) {
-            throw new Error('no leaf with id ' + id + ' exists');
-        }
-        return null;
-    },
-
-    /**
-     * Find a leaf by matching its custom attributes.
-     * @param {Object} attributes
-     * @param {Boolean} [throwOnMissing=true] - if no leaf is found, throw an error
-     * @return {Leaf|null}
-     */
-    findByAttributes: function findByAttributes() {
-        var attributes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-        var throwOnMissing = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
-
-        var generator = this.traverse(true);
-        var result = generator.next();
-        while (!result.done) {
-            var leaf = result.value;
-            var isMatch = true;
-            var keys = Object.keys(attributes);
-            while (keys.length) {
-                var key = keys.shift();
-                isMatch = isMatch && leaf.attributes[key] === attributes[key];
-            }
-            if (isMatch) {
-                return leaf;
-            }
-            result = generator.next();
-        }
-        if (throwOnMissing) {
-            attributes = JSON.stringify(attributes);
-            throw new Error('no leaf exists for attributes: ' + attributes);
-        }
-        return null;
-    },
-
-    //
-    // querying this leaf's relationship to other leafs
-    //
-
-    /**
-     * Is this instance the parent of leaf?
-     * @param {Leaf} leaf
-     * @returns {Boolean}
-     */
-    isParentOf: function isParentOf(leaf) {
-        return leaf.getParent().equals(this);
-    },
-
-    /**
-     * Is this instance a child of leaf?
-     * @param {Leaf} leaf
-     * @returns {Boolean}
-     */
-    isChildOf: function isChildOf(leaf) {
-        return this.getParent().equals(leaf);
-    },
-
-    /**
-     * Is this instance an ancestor of leaf?
-     * @param {Leaf} leaf
-     * @returns {Boolean}
-     */
-    isAncestorOf: function isAncestorOf(leaf) {
-        return leaf.isDescendantOf(this);
-    },
-
-    /**
-     * Is this instance a descendant of leaf?
-     * @param {Leaf} leaf
-     * @returns {Boolean}
-     */
-    isDescendantOf: function isDescendantOf(leaf) {
-        var parent = this.getParent();
-        while (parent) {
-            if (parent === leaf) {
-                return true;
-            }
-            parent = parent.getParent();
-        }
-        return false;
-    },
-
-    /**
-     * Is this instance a sibling of leaf?
-     * @param {Leaf} leaf
-     * @returns {Boolean}
-     */
-    isSibling: function isSibling(leaf) {
-        return this.getParent() === leaf.getParent();
-    },
-
-    /**
-     * Is this instance before leaf?
-     * @param {Leaf} leaf
-     * @returns {Boolean}
-     */
-    isBefore: function isBefore(leaf) {
-        return this.isSibling(leaf) && leaf.position > this.position;
-    },
-
-    /**
-     * Is this instance after leaf?
-     * @param {Leaf} leaf
-     * @returns {Boolean}
-     */
-    isAfter: function isAfter(leaf) {
-        return this.isSibling(leaf) && leaf.position < this.position;
-    },
-
-    /**
-     * Is this instance "left of" leaf (i.e., has a lower level)?
-     * @param {Leaf} leaf
-     * @returns {Boolean}
-     */
-    isLeftOf: function isLeftOf(leaf) {
-        return leaf.level > this.level;
-    },
-
-    /**
-     * Is this instance "right of" leaf (i.e., has a higher level)?
-     * @param {Leaf} leaf
-     * @returns {Boolean}
-     */
-    isRightOf: function isRightOf(leaf) {
-        return leaf.level < this.level;
-    },
-
-    //
-    // how this leaf represents itself
-    //
-
-    /**
-     * Expand this leaf.
-     * @param {Boolean} [deep=false] - expand the children of this leaf, recursively
-     */
-    expand: function expand() {
-        var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-
-        if (deep) {
-            this.expandChildren(deep);
-        }
-        this.isExpanded = true;
-    },
-
-    /**
-     * Expand the children of this leaf.
-     * @param {Boolean} [deep=false] - expand the children of each child, recursively
-     */
-    expandChildren: function expandChildren() {
-        var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-
-        var generator = this.traverse(deep);
-        var result = generator.next();
-        while (!result.done) {
-            var leaf = result.value;
-            leaf.isExpanded = true;
-            leaf.collapse();
-            result = generator.next();
-        }
-    },
-
-    /**
-     * Collapse this leaf.
-     * @param {Boolean} [deep=false] - collapse the children of this leaf, recursively
-     */
-    collapse: function collapse() {
-        var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-
-        if (deep) {
-            this.collapseChildren(deep);
-        }
-        this.isExpanded = false;
-    },
-
-    /**
-     * Collapse the children of this leaf.
-     * @param {Boolean} [deep=false] - collapse the children of each child, recursively
-     */
-    collapseChildren: function collapseChildren() {
-        var deep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-
-        var generator = this.traverse(deep);
-        var result = generator.next();
-        while (!result.done) {
-            var leaf = result.value;
-            leaf.isExpanded = false;
-            result = generator.next();
-        }
-    },
-
-    /**
-     * Toggle (expand/collapse) this instance.
-     * @returns {*}
-     */
-    toggle: function toggle() {
-        return this.isExpanded ? this.collapse() : this.expand();
-    },
-
-    /**
-     * Mark this leaf as being renamed.
-     */
-    requestLabelChange: function requestLabelChange() {
-        this.isBeingRenamed = true;
-    },
-
-    /**
-     * Unmark this leaf as being renamed.
-     */
-    cancelLabelChange: function cancelLabelChange() {
-        this.isBeingRenamed = false;
-    },
-
-    /**
-     * Apply a label change to this leaf.
-     * @param {String} label
-     */
-    commitLabelChange: function commitLabelChange(label) {
-        this.label = label;
-        this.isBeingRenamed = false;
-    },
-
-    /**
-     * Set (override) the custom attributes of this leaf.
-     * @param {Object} [attributes={}]
-     */
-    setAttributes: function setAttributes() {
-        var attributes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-        this.attributes = attributes;
-    },
-
-    /**
-     * Set a custom attribute for this leaf.
-     * @param {String} key
-     * @param {*} value
-     */
-    setAttribute: function setAttribute(key, value) {
-        this.attributes[key] = value;
-    },
-
-    /**
-     * Merge the attributes of this leaf with attributes.
-     * @param {Object} [attributes={}]
-     */
-    mergeAttributes: function mergeAttributes() {
-        var attributes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-        this.attributes = Object.assign(this.attributes, attributes);
-    },
-
-    /**
-     * Does this leaf have a given attribute? If withValue is supplied,
-     *   does the attribute also have the given value?
-     * @param {String} key - attribute name
-     * @param {*} [withValue=null] - value to test for
-     * @returns {Boolean}
-     */
-    hasAttribute: function hasAttribute(key) {
-        var withValue = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-
-        var hasAttribute = this.attributes.hasOwnProperty(key);
-        if (!hasAttribute || withValue === null) {
-            return hasAttribute;
-        }
-        return this.attributes[key] === withValue;
-    },
-
-    /**
-     * Does any child of this instance have the given attribute? If withValue
-     *   is supplied, does the attribute also have the given value?
-     * @param {Boolean} deep - check the children of each child, recursively
-     * @param {String} key - attribute name
-     * @param {*} [withValue=null] - value to test for
-     * @returns {Boolean}
-     */
-    anyChildHasAttribute: function anyChildHasAttribute(deep, key) {
-        var withValue = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-
-        var generator = this.traverse(deep);
-        var result = generator.next();
-        while (!result.done) {
-            var leaf = result.value;
-            if (leaf.hasAttribute(key, withValue)) {
-                return true;
-            }
-            result = generator.next();
-        }
-        return false;
-    },
-
-    //
-    // utility methods
-    //
-
-    /**
-     * Update the internal positions of all child leafs.
-     * @private
-     */
-    _updatePositions: function _updatePositions() {
-        var maxPosition = this.length() - 1;
-        var generator = this.traverse();
-        var result = generator.next();
-        var position = -1;
-        while (!result.done) {
-            var leaf = result.value;
-            leaf.position = position += 1;
-            leaf.isFirstSibling = leaf.position === 0;
-            leaf.isLastSibling = leaf.position === maxPosition;
-            result = generator.next();
-        }
-    },
-
-    /**
-     * Does this instance equal (identity) another reference?
-     * @param {Leaf} leaf
-     * @returns {Boolean}
-     */
-    equals: function equals(leaf) {
-        return leaf === this;
-    },
-
-    /**
-     * How many child leafs does this instance have?
-     * @returns {Number}
-     */
-    length: function length() {
-        return this.leafCount;
-    },
-
-    /**
-     * Serialize this instance as a string.
-     * @returns {String}
-     */
-    toString: function toString() {
-        var id = this.id,
-            label = this.label,
-            level = this.level,
-            position = this.position;
-
-        return '[' + id + ' ' + label + ' - ' + level + ':' + position + ']';
-    }
-};
-
-/**
- * Creates a Leaf instance.
- * @param {String} label
- * @param {Boolean} [isExpanded=false]
- * @param {Boolean} [isActive=true]
- * @return {Leaf}
- * @constructor
- */
-exports.Leaf = _Leaf = function Leaf() {
-    var label = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-    var isExpanded = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-    var isActive = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-
-    /**
-     * @typedef {Object} Leaf
-     * @augments {leafPrototype}
-     * @property {Number} id - unique, internal identifier
-     * @property {Leaf|null} parent
-     * @property {Array.<Leaf>} leafs
-     * @property {Number} leafCount
-     * @property {String} label
-     * @property {Number} level
-     * @property {Number} position
-     * @property {Boolean} isRoot
-     * @property {Boolean} isFirstSibling
-     * @property {Boolean} isLastSibling
-     * @property {Boolean} isExpanded
-     * @property {Boolean} isBeingRenamed
-     * @property {Boolean} isBeingGrafted
-     * @property {Boolean} isActive
-     * @property {Object} attributes
-     * @method {Function} moveBefore
-     * @method {Function} moveAfter
-     * @method {Function} makeParentOf
-     * @method {Function} makeChildOf
-     * @method {Function} remove
-     * @method {Function} move
-     * @method {Function} branch
-     * @method {Function} graft
-     * @method {Function} ungraft
-     * @method {Function} inosculate
-     * @method {Function} activate
-     * @method {Function} deactivate
-     * @method {Function} getParent
-     * @method {Function} hasChildren
-     * @method {Function} hasAnyActiveChildren
-     * @method {Function} hasAnyInactiveChildren
-     * @method {Function} getChildren
-     * @method {Function} getFirstChild
-     * @method {Function} getLastChild
-     * @method {Function} getSiblings
-     * @method {Function} getSiblingsBefore
-     * @method {Function} getSiblingsAfter
-     * @method {Function} get
-     * @method {Function} traverse
-     * @method {Function} find
-     * @method {Function} findByAttributes
-     * @method {Function} isParentOf
-     * @method {Function} isChildOf
-     * @method {Function} isAncestorOf
-     * @method {Function} isDescendantOf
-     * @method {Function} isSibling
-     * @method {Function} isBefore
-     * @method {Function} isAfter
-     * @method {Function} isLeftOf
-     * @method {Function} isRightOf
-     * @method {Function} expand
-     * @method {Function} expandChildren
-     * @method {Function} collapse
-     * @method {Function} collapseChildren
-     * @method {Function} toggle
-     * @method {Function} requestLabelChange
-     * @method {Function} cancelLabelChange
-     * @method {Function} commitLabelChange
-     * @method {Function} setAttributes
-     * @method {Function} setAttribute
-     * @method {Function} mergeAttributes
-     * @method {Function} hasAttribute
-     * @method {Function} anyChildHasAttribute
-     * @method {Function} equals
-     * @method {Function} length
-     * @method {Function} toString
-     *
-     */
-    var instance = Object.create(leafPrototype);
-    /** @type {Leaf} parent node */
-    instance.parent = null;
-    /** @type {Array.<Leaf>} child nodes */
-    instance.leafs = [];
-    /** @type {Number} number of child nodes */
-    instance.leafCount = 0;
-    /** @type {String} label */
-    instance.label = label;
-    /** @type {Number} indentation level */
-    instance.level = 0;
-    /** @type {Number} position as a child; 0-based */
-    instance.position = 0;
-    /** @type {Boolean} is this a parentless node? */
-    instance.isRoot = true;
-    /** @type {Boolean} is this node the first among siblings? */
-    instance.isFirstSibling = true;
-    /** @type {Boolean} is this node the last among siblings? */
-    instance.isLastSibling = true;
-    /** @type {Boolean} is this node expanded? */
-    instance.isExpanded = isExpanded;
-    /** @type {Boolean} is this node being renamed? */
-    instance.isBeingRenamed = false;
-    /** @type {Boolean} is this leaf being grafted into another? */
-    instance.isBeingGrafted = false;
-    /** @type {Boolean} generic "active" flag **/
-    instance.isActive = isActive;
-    /** @type {Boolean} attributes to be rendered as data-<key> in the DOM */
-    instance.attributes = {};
-    /** @type {Number} unique identifier */
-    instance.id = _Leaf.instanceCount += 1;
-    return instance;
-};
-
-leafPrototype.constructor = _Leaf;
-
-/**
- * Internal instance count. Used to determine new Leaf IDs.
- * @type {Number}
- */
-_Leaf.instanceCount = 0;
-
-/***/ }),
-/* 126 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.GrootMenu = undefined;
-
-var _noid = __webpack_require__(127);
-
-var _grootTemplates = __webpack_require__(90);
-
-//
-// GrootMenu
-//
-
-var GrootMenu = exports.GrootMenu = void 0;
-
-var grootMenuPrototype = {
-    show: function show(listItemElement) {
-        var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : GrootMenu.defaultOptions;
-
-        this.listItemElement = listItemElement || this.listItemElement;
-        if (!listItemElement) {
-            throw new Error('no list item provided');
-        }
-        options = options || this.options;
-        this.options = options;
-        var tempElement = document.createElement('div');
-        tempElement.innerHTML = (0, _grootTemplates.menuTemplate)(this.options);
-        var menuElement = this.menuElement = tempElement.firstElementChild;
-        listItemElement.insertBefore(menuElement, listItemElement.firstElementChild);
-        this.isShowing = true;
-    },
-
-    hide: function hide() {
-        if (!this.isShowing) {
-            return;
-        }
-        this.listItemElement.removeChild(this.menuElement);
-        this.isShowing = false;
-    }
-};
-
-exports.GrootMenu = GrootMenu = function GrootMenu() {
-    var instance = Object.create(grootMenuPrototype);
-    instance.isShowing = false;
-    instance.menuElement = null;
-    instance.listItemElement = null;
-    instance.options = null;
-    return instance;
-};
-
-/**
- * Given a set of potential options, will the menu actually
- *   show anything meaningful, i.e., are all options set to
- *   "off", or are there options that will be displayed?
- * @param {GrootOptions} options
- * @return {Boolean}
- */
-GrootMenu.willShow = function (options) {
-    var ignoredOptions = ['sourceID', 'targetID'];
-    var optionKeys = Object.keys(options).filter(function (optionKey) {
-        return ignoredOptions.indexOf(optionKey) < 0;
-    });
-    return optionKeys.reduce(function (accumulator, optionKey) {
-        return accumulator || options[optionKey];
-    }, false);
-};
-
-/**
- * @typedef {Object} GrootOptions
- */
-GrootMenu.defaultOptions = Object.seal({
-    sourceID: (0, _noid.noid)(),
-    targetID: (0, _noid.noid)(),
-    create: true,
-    rename: true,
-    'delete': true,
-    moveTo: true,
-    moveUp: true,
-    moveDown: true,
-    moveFirst: true,
-    moveLast: true,
-    moveBefore: false,
-    moveAfter: false,
-    makeParent: false,
-    activateChildren: false,
-    disableChildren: false
-});
-
-GrootMenu.createOptions = function (overrides) {
-    return Object.assign({}, GrootMenu.defaultOptions, overrides);
-};
-
-grootMenuPrototype.constructor = GrootMenu;
 
 /***/ }),
 /* 127 */
@@ -12756,12 +12754,23 @@ exports.default = function () {
 
 /***/ }),
 /* 329 */,
-/* 330 */,
-/* 331 */
+/* 330 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _groot = __webpack_require__(126);
+
+window.Groot = _groot.Groot;
+
+/***/ }),
+/* 331 */,
+/* 332 */
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(121);
-module.exports = __webpack_require__(122);
+module.exports = __webpack_require__(330);
 
 
 /***/ })

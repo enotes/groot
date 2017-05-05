@@ -8,7 +8,7 @@ module.exports = {
     entry: {
         'groot': [
             'babel-polyfill',
-            path.join(__dirname, 'src', 'groot.js'),
+            path.join(__dirname, 'src', 'es5-wrapper.js'),
         ],
         'demo': [
             'babel-polyfill',
