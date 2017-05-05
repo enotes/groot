@@ -201,37 +201,37 @@ const EVENTS = {
          * - async:no
          * - multisource:no
          */
-        CLICKING: '_menu.clicking',
+        CLICKING: 'menu.clicking',
         /**
          * menu.clicked
          * - async:no
          * - multisource:no
          */
-        CLICKED: '_menu.clicked',
+        CLICKED: 'menu.clicked',
         /**
          * menu.showing
          * - async:no
          * - multisource:no
          */
-        SHOWING: '_menu.showing',
+        SHOWING: 'menu.showing',
         /**
          * menu.shown
          * - async:no
          * - multisource:no
          */
-        SHOWN: '_menu.shown',
+        SHOWN: 'menu.shown',
         /**
          * menu.hiding
          * - async:no
          * - multisource:no
          */
-        HIDING: '_menu.hiding',
+        HIDING: 'menu.hiding',
         /**
          * menu.hidden
          * - async:no
          * - multisource:no
          */
-        HIDDEN: '_menu.hidden',
+        HIDDEN: 'menu.hidden',
     },
 };
 
