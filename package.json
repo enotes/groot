@@ -1,7 +1,7 @@
 {
   "name": "groot",
   "description": "Groot, a content tree.",
-  "version": "1.0.0-beta",
+  "version": "1.0.1-beta",
   "main": "dist/groot.js",
   "scripts": {
     "lint": "./node_modules/.bin/eslint -c ./.eslintrc --quiet ./src/",
