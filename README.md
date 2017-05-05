@@ -30,7 +30,7 @@ A UI tree for working with nested content.
 Install Groot with npm.
 
 ```
-$ npm install groot
+$ npm install --save @enotes/groot
 ```
 
 Import the `Groot` constructor into your own module.
