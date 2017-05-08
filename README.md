@@ -5,9 +5,11 @@ A UI tree for working with nested content.
 <!-- TOC -->
 
 - [Groot](#groot)
+    - [Prerequisites](#prerequisites)
     - [Installation](#installation)
         - [As an ES2015 module](#as-an-es2015-module)
         - [As an ES5 script](#as-an-es5-script)
+        - [Styles and fonts](#styles-and-fonts)
     - [Building the project](#building-the-project)
     - [Usage](#usage)
         - [Creating your tree](#creating-your-tree)
@@ -21,6 +23,18 @@ A UI tree for working with nested content.
 <!-- /TOC -->
 
 ![Groot menu with TV show information](groot-vanity-shot.png)
+
+## Prerequisites
+
+If you intend to use Groot as an ES2015 module, you will need:
+
+1. a transpiler such as [Webpack](https://webpack.js.org/) + [babel](https://babeljs.io/) to build your project,
+2. an ES2015 polyfill library, such as [babel-polyfill](https://babeljs.io/docs/usage/polyfill/), and
+3. a Handlebars template loader, such as [handlebars-loader](https://github.com/pcardune/handlebars-loader).
+
+To see how these work together refer to the project's [webpack.config.js](https://github.com/enotes/groot/blob/master/webpack.config.js) file, specifically the `entry` and `modules` sections.
+
+If you intend to use Groot as an ES5 script, no other prerequisites are necessary.
 
 ## Installation
 
@@ -45,15 +59,36 @@ Copy the Groot assets in the `dist/` folder to the appropriate vendor location i
 Reference the Groot assets in your HTML document.
 
 ```html
-<head>
-    <link type="text/css" rel="stylesheet" src="scripts/vendor/groot/groot.css" />
-</head>
-<body>
-    <!-- creates window.Groot -->
-    <script src="scripts/vendor/groot/groot.js"></script>
-    <script>console.log(window.Groot);</script>
-</body>
+<!-- creates window.Groot -->
+<script src="scripts/vendor/groot/groot.es5.js"></script>
+<script>console.log(window.Groot);</script>
 ```
+
+### Styles and fonts
+
+The Groot style sheet and fonts are located in the `dist/` folder. You can copy these artifacts to your own project, but be aware that the stylesheet *assumes* that its fonts are located in a sibling `fonts/` directory. If this does not match your project structure you can:
+
+- manually edit the groot.css file to suit your needs, or
+- if you use Sass, you can:
+    1. set the `$icomoon-font-path` variable to the path where your font files reside
+    2. import the `src/groot.scss` file into your own stylesheet
+    3. recompile your stylesheet
+
+The core Groot css style selectors are:
+
+| Selector                   | Purpose                                                                                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.groot-tree`              | Base unordered list. Contains `.groot-leaf` list items.                                                                                                       |
+| `.groot-leaf`              | Individual list item. May contain neseted `.groot-tree` element.                                                                                              |
+| `.groot-icon`              | All icons.                                                                                                                                                    |
+| `.groot-leaf__toggle`      | The expand/collapse icon.                                                                                                                                     |
+| `.groot-leaf__up`          | The up arrow icon.                                                                                                                                            |
+| `.groot-leaf__down`        | The down arrow icon.                                                                                                                                          |
+| `.groot-leaf__label`       | The text in a `.groot-leaf` element. Will have `.active` or `.inactive` classes. Will have `.drag-target` class on drag events. Has `:hover` pseudo-selector. |
+| `.groot-leaf__label-field` | The input element for creating/editing leafs.                                                                                                                 |
+| `.groot-menu`              | The pop-up menu.                                                                                                                                              |
+| `.groot-menu__label`       | Items on the pop-up menu.                                                                                                                                     |
+| `.groot-menu__close`       | The pop-up menu close button.                                                                                                                                 |
 
 ## Building the project
 
