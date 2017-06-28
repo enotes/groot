@@ -4397,6 +4397,33 @@ var leafPrototype = {
     },
 
     /**
+     * Gets a collection of this leaf's ancestors, starting
+     *   with the closest ancestor and ending with the furthest.
+     *   If inverse=true, then the order will be reversed.
+     * @param {Boolean} inverse - inverse the order of ancestors
+     * @return {Array.<Leaf>}
+     */
+    getAncestors: function getAncestors() {
+        var inverse = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+        var ancestors = [];
+        var leaf = this,
+            parent = leaf.getParent();
+        while (parent) {
+            if (inverse) {
+                // furthest to closest
+                ancestors.unshift(parent);
+            } else {
+                // closest to furthest
+                ancestors.push(parent);
+            }
+            leaf = parent;
+            parent = leaf.getParent();
+        }
+        return ancestors;
+    },
+
+    /**
      * Does this instance have any children?
      * @returns {Boolean}
      */
@@ -5573,7 +5600,18 @@ var grootPrototype = {
             return;
         }
 
-        var listItem = this._findListItem(sourceLeaf);
+        // recursively render ancestors that have not yet
+        // been rendered
+        var ancestorLeafs = sourceLeaf.getAncestors(true);
+        while (ancestorLeafs.length) {
+            var ancestorLeaf = ancestorLeafs.shift();
+            if (ancestorLeaf.isExpanded) {
+                continue;
+            }
+            ancestorLeaf.toggle();
+            var ancestorListItem = this._findListItem(ancestorLeaf);
+            this._renderLeaf(ancestorListItem, ancestorLeaf);
+        }
 
         var EXPAND_ARGS = {
             source: Object.assign({
@@ -5586,6 +5624,7 @@ var grootPrototype = {
         sourceLeaf.toggle();
         this._raise(EVENTS.LEAF.EXPANDED, EXPAND_ARGS);
 
+        var listItem = this._findListItem(sourceLeaf);
         this._renderLeaf(listItem, sourceLeaf);
     },
 

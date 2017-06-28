@@ -174,6 +174,31 @@ const leafPrototype = {
     },
 
     /**
+     * Gets a collection of this leaf's ancestors, starting
+     *   with the closest ancestor and ending with the furthest.
+     *   If inverse=true, then the order will be reversed.
+     * @param {Boolean} inverse - inverse the order of ancestors
+     * @return {Array.<Leaf>}
+     */
+    getAncestors: function (inverse = false) {
+        const ancestors = [];
+        let leaf = this,
+            parent = leaf.getParent();
+        while (parent) {
+            if (inverse) {
+                // furthest to closest
+                ancestors.unshift(parent);
+            } else {
+                // closest to furthest
+                ancestors.push(parent);
+            }
+            leaf = parent;
+            parent = leaf.getParent();
+        }
+        return ancestors;
+    },
+
+    /**
      * Does this instance have any children?
      * @returns {Boolean}
      */
