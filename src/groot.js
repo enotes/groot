@@ -365,7 +365,18 @@ const grootPrototype = {
             return;
         }
 
-        const listItem = this._findListItem(sourceLeaf);
+        // recursively render ancestors that have not yet
+        // been rendered
+        const ancestorLeafs = sourceLeaf.getAncestors(true);
+        while (ancestorLeafs.length) {
+            const ancestorLeaf = ancestorLeafs.shift();
+            if (ancestorLeaf.isExpanded) {
+                continue;
+            }
+            ancestorLeaf.toggle();
+            const ancestorListItem = this._findListItem(ancestorLeaf);
+            this._renderLeaf(ancestorListItem, ancestorLeaf);
+        }
 
         const EXPAND_ARGS = {
             source: Object.assign({
@@ -378,6 +389,7 @@ const grootPrototype = {
         sourceLeaf.toggle();
         this._raise(EVENTS.LEAF.EXPANDED, EXPAND_ARGS);
 
+        const listItem = this._findListItem(sourceLeaf);
         this._renderLeaf(listItem, sourceLeaf);
     },
 
